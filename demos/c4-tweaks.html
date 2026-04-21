@@ -1,762 +1,989 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
+<!doctype html>
+<html lang="zh-Hans">
 <head>
-<meta charset="UTF-8">
-<title>Huashu-Design · Tweaks 实时变体</title>
-<script crossorigin src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
-<script crossorigin src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
-<script src="https://unpkg.com/@babel/standalone@7.25.6/babel.min.js"></script>
+<meta charset="utf-8" />
+<title>c4-tweaks · 拨动即所得（中文版）</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,300;1,6..72,400;1,6..72,500&family=Noto+Serif+SC:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300..700;1,8..60,300..700&family=Noto+Serif+SC:wght@300;400;500;600;700&family=Inter:wght@100;200;300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { width: 100%; height: 100%; overflow: hidden; }
-  body {
-    background: #0c0c0c;
-    font-family: 'Newsreader', 'Noto Serif SC', Georgia, serif;
-    color: #1a1a1a;
-    -webkit-font-smoothing: antialiased;
-    text-rendering: optimizeLegibility;
+  :root {
+    --bg: #000000;
+    --ink: #FFFFFF;
+    --ink-80: rgba(255,255,255,0.82);
+    --ink-60: rgba(255,255,255,0.58);
+    --muted: rgba(255,255,255,0.40);
+    --hairline: rgba(255,255,255,0.12);
+    --accent: #D97757;
+    --accent-deep: #B85D3D;
+
+    /* Mock landing page · warm variant (initial state) */
+    --warm-bg: #F6EFE6;
+    --warm-panel: #FFFFFF;
+    --warm-ink: #1A1918;
+    --warm-dim: #8B867E;
+    --warm-hair: rgba(0,0,0,0.08);
+    --warm-accent: #D97757;
+
+    /* Mock landing page · cool variant (after slider 1) */
+    --cool-bg: #0E1620;
+    --cool-panel: #17222E;
+    --cool-ink: #E8EEF5;
+    --cool-dim: #7A8A9B;
+    --cool-hair: rgba(255,255,255,0.08);
+    --cool-accent: #5A8CB8;
+
+    --serif-en: "Source Serif 4", Georgia, serif;
+    --serif-cn: "Noto Serif SC", "Source Serif 4", Georgia, serif;
+    --sans: "Inter", -apple-system, "PingFang SC", "HarmonyOS Sans SC", system-ui, sans-serif;
+    --mono: "JetBrains Mono", "SF Mono", ui-monospace, monospace;
   }
+  html, body {
+    margin: 0; padding: 0;
+    background: #000;
+    overflow: hidden;
+    font-family: var(--sans);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+  }
+  * { box-sizing: border-box; }
+
+  .stage {
+    position: fixed;
+    top: 50%; left: 50%;
+    width: 1920px; height: 1080px;
+    transform: translate(-50%, -50%);
+    transform-origin: center center;
+    background: var(--bg);
+    overflow: hidden;
+  }
+
+  /* Film grain */
+  .grain {
+    position: absolute; inset: 0;
+    background-image:
+      radial-gradient(rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-size: 3px 3px;
+    opacity: 0.4;
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  /* Watermark */
+  .watermark {
+    position: absolute;
+    top: 44px; left: 56px;
+    font-family: var(--mono);
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.2em;
+    color: rgba(255,255,255,0.16);
+    z-index: 10;
+  }
+
+  .version-mark {
+    position: absolute;
+    bottom: 44px; right: 56px;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    color: rgba(255,255,255,0.12);
+    z-index: 10;
+  }
+
+  /* ============ Main composition ============ */
+  .composition {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    grid-template-columns: 1080px 500px;
+    gap: 80px;
+    padding: 130px 120px 140px 140px;
+    align-items: center;
+    perspective: 2400px;
+  }
+
+  /* ---- Design preview (left) ---- */
+  .preview-frame {
+    position: relative;
+    width: 1080px;
+    height: 800px;
+    border-radius: 18px;
+    overflow: hidden;
+    transform-style: preserve-3d;
+    transform: rotateX(6deg) rotateY(-4deg);
+    box-shadow:
+      0 50px 120px rgba(0,0,0,0.6),
+      0 0 0 1px rgba(255,255,255,0.06);
+    opacity: 0;
+    will-change: opacity, transform, background;
+    transition: background 280ms cubic-bezier(.2,.8,.2,1);
+  }
+  .preview-frame.warm {
+    background: var(--warm-bg);
+  }
+  .preview-frame.cool {
+    background: var(--cool-bg);
+  }
+
+  /* Browser chrome top bar */
+  .browser-chrome {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 22px;
+    border-bottom: 1px solid var(--warm-hair);
+    background: var(--warm-panel);
+    transition: all 280ms cubic-bezier(.2,.8,.2,1);
+  }
+  .cool .browser-chrome {
+    background: var(--cool-panel);
+    border-bottom-color: var(--cool-hair);
+  }
+  .dot {
+    width: 11px; height: 11px; border-radius: 50%;
+    background: rgba(0,0,0,0.14);
+  }
+  .cool .dot { background: rgba(255,255,255,0.14); }
+  .url-bar {
+    flex: 1;
+    margin-left: 14px;
+    padding: 6px 14px;
+    border-radius: 6px;
+    background: rgba(0,0,0,0.04);
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--warm-dim);
+    letter-spacing: 0.05em;
+    transition: all 280ms cubic-bezier(.2,.8,.2,1);
+  }
+  .cool .url-bar {
+    background: rgba(255,255,255,0.04);
+    color: var(--cool-dim);
+  }
+
+  /* Hero content */
+  .preview-body {
+    padding: 54px 72px 60px 72px;
+    color: var(--warm-ink);
+    transition: color 280ms cubic-bezier(.2,.8,.2,1);
+  }
+  .cool .preview-body { color: var(--cool-ink); }
+
+  .preview-eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--warm-accent);
+    transition: color 280ms cubic-bezier(.2,.8,.2,1);
+  }
+  .cool .preview-eyebrow { color: var(--cool-accent); }
+
+  .preview-title {
+    margin-top: 16px;
+    font-family: var(--serif-cn);
+    font-weight: 400;
+    font-size: 86px;
+    line-height: 1.02;
+    letter-spacing: -0.02em;
+    transition: font-family 240ms cubic-bezier(.2,.8,.2,1),
+                font-weight 240ms cubic-bezier(.2,.8,.2,1),
+                letter-spacing 240ms cubic-bezier(.2,.8,.2,1);
+  }
+  .preview-title .em {
+    color: var(--warm-accent);
+    font-style: italic;
+    transition: color 280ms cubic-bezier(.2,.8,.2,1);
+  }
+  .cool .preview-title .em { color: var(--cool-accent); }
+
+  .preview-frame.sans .preview-title {
+    font-family: var(--sans);
+    font-weight: 200;
+    letter-spacing: -0.045em;
+  }
+  .preview-frame.sans .preview-title .em {
+    font-style: normal;
+  }
+
+  .preview-sub {
+    margin-top: 24px;
+    font-family: var(--serif-cn);
+    font-size: 20px;
+    font-weight: 300;
+    line-height: 1.6;
+    max-width: 720px;
+    color: var(--warm-dim);
+    transition: color 280ms cubic-bezier(.2,.8,.2,1),
+                font-family 240ms cubic-bezier(.2,.8,.2,1);
+  }
+  .cool .preview-sub { color: var(--cool-dim); }
+  .preview-frame.sans .preview-sub {
+    font-family: var(--sans);
+  }
+
+  /* Density cards grid */
+  .card-grid {
+    margin-top: 54px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+    transition: grid-template-columns 280ms cubic-bezier(.2,.8,.2,1),
+                gap 280ms cubic-bezier(.2,.8,.2,1);
+  }
+  .preview-frame.dense .card-grid {
+    grid-template-columns: repeat(3, 1fr);
+    grid-auto-rows: minmax(72px, auto);
+    gap: 10px;
+  }
+
+  .card {
+    padding: 22px 22px 24px 22px;
+    border-radius: 10px;
+    background: rgba(0,0,0,0.035);
+    border: 1px solid var(--warm-hair);
+    transition: all 280ms cubic-bezier(.2,.8,.2,1);
+  }
+  .cool .card {
+    background: rgba(255,255,255,0.03);
+    border-color: var(--cool-hair);
+  }
+  .preview-frame.dense .card {
+    padding: 12px 14px;
+  }
+
+  .card-icon {
+    width: 28px; height: 28px;
+    border-radius: 6px;
+    background: var(--warm-accent);
+    opacity: 0.16;
+    margin-bottom: 14px;
+    transition: all 280ms cubic-bezier(.2,.8,.2,1);
+  }
+  .cool .card-icon { background: var(--cool-accent); }
+  .preview-frame.dense .card-icon {
+    width: 18px; height: 18px;
+    margin-bottom: 8px;
+  }
+
+  .card-title {
+    font-family: var(--serif-cn);
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--warm-ink);
+    letter-spacing: -0.005em;
+    transition: color 280ms cubic-bezier(.2,.8,.2,1),
+                font-family 240ms cubic-bezier(.2,.8,.2,1),
+                font-size 280ms cubic-bezier(.2,.8,.2,1);
+  }
+  .cool .card-title { color: var(--cool-ink); }
+  .preview-frame.sans .card-title {
+    font-family: var(--sans);
+    font-weight: 500;
+  }
+  .preview-frame.dense .card-title {
+    font-size: 13px;
+  }
+
+  .card-text {
+    margin-top: 6px;
+    font-family: var(--serif-cn);
+    font-size: 13px;
+    line-height: 1.45;
+    color: var(--warm-dim);
+    transition: all 280ms cubic-bezier(.2,.8,.2,1);
+  }
+  .cool .card-text { color: var(--cool-dim); }
+  .preview-frame.sans .card-text { font-family: var(--sans); }
+  .preview-frame.dense .card-text {
+    font-size: 11px;
+    line-height: 1.3;
+    opacity: 0.85;
+  }
+
+  /* Extra cards (hidden in sparse mode) */
+  .card.extra {
+    opacity: 0;
+    transform: scale(0.92);
+    transition: opacity 240ms cubic-bezier(.2,.8,.2,1),
+                transform 240ms cubic-bezier(.2,.8,.2,1),
+                background 280ms cubic-bezier(.2,.8,.2,1),
+                border-color 280ms cubic-bezier(.2,.8,.2,1);
+    pointer-events: none;
+    max-height: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+  .preview-frame.dense .card.extra {
+    opacity: 1;
+    transform: scale(1);
+    max-height: 120px;
+    padding: 12px 14px;
+  }
+
+  /* ---- Slider panel (right) ---- */
+  .slider-panel {
+    position: relative;
+    width: 500px;
+    opacity: 0;
+    will-change: opacity, transform;
+    display: flex;
+    flex-direction: column;
+    gap: 64px;
+  }
+
+  .anchor-line {
+    position: absolute;
+    top: -80px;
+    left: 8px;
+    font-family: var(--serif-cn);
+    font-weight: 400;
+    font-size: 26px;
+    letter-spacing: 0.02em;
+    color: var(--ink-80);
+    opacity: 0;
+    will-change: opacity, transform;
+  }
+  .anchor-line .em {
+    color: var(--accent);
+    font-weight: 500;
+  }
+
+  .slider-item {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .slider-label {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+  }
+  .slider-name {
+    font-family: var(--mono);
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    color: var(--ink-80);
+    text-transform: uppercase;
+  }
+  .slider-value {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    color: var(--muted);
+  }
+
+  /* Track */
+  .track {
+    position: relative;
+    width: 100%;
+    height: 2px;
+    background: var(--hairline);
+  }
+  .track-fill {
+    position: absolute;
+    top: 0; left: 0;
+    height: 100%;
+    width: 10%;
+    background: var(--accent);
+    will-change: width;
+  }
+
+  /* Tick marks */
+  .ticks {
+    position: absolute;
+    inset: -4px 0 -4px 0;
+    display: flex;
+    justify-content: space-between;
+    pointer-events: none;
+  }
+  .tick {
+    width: 1px;
+    height: 10px;
+    background: rgba(255,255,255,0.14);
+  }
+
+  /* Knob */
+  .knob {
+    position: absolute;
+    top: 50%;
+    left: 10%;
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: var(--ink);
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.6),
+                0 8px 24px rgba(0,0,0,0.5);
+    will-change: left, transform, box-shadow;
+  }
+  .knob.active {
+    box-shadow: 0 0 0 2px var(--accent),
+                0 0 30px rgba(217,119,87,0.45),
+                0 8px 24px rgba(0,0,0,0.5);
+  }
+
+  /* Cursor */
+  .cursor {
+    position: absolute;
+    width: 20px; height: 20px;
+    pointer-events: none;
+    will-change: left, top, opacity;
+    opacity: 0;
+    z-index: 20;
+  }
+  .cursor svg { width: 100%; height: 100%; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8)); }
+
+  /* ---- Brand reveal ---- */
+  /* Stage dimmer: fades the composition out just before the panel slides in */
+  .stage-dimmer {
+    position: absolute;
+    inset: 0;
+    background: #000000;
+    opacity: 0;
+    z-index: 40;
+    pointer-events: none;
+    will-change: opacity;
+  }
+  .brand-panel {
+    position: absolute;
+    inset: 0;
+    background: #F5F4F0;
+    transform: translateY(100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+    will-change: transform;
+  }
+  .brand-wordmark {
+    font-family: var(--serif-en);
+    font-size: 72px;
+    font-weight: 100;
+    font-variation-settings: "wght" 100;
+    letter-spacing: -0.02em;
+    color: #1A1918;
+    text-align: center;
+    line-height: 1;
+    opacity: 0;
+    transform: translateY(20px);
+    will-change: opacity, transform, font-variation-settings, font-weight;
+  }
+  .brand-wordmark .accent { color: #D97757; font-weight: inherit; }
+
+  .brand-line {
+    /* Flex-centered, 60px below wordmark (line-height 1 @ 72px → descender + 24 gap) */
+    margin-top: 60px;
+    height: 2px;
+    width: 0;
+    background: #D97757;
+    align-self: center;
+    will-change: width;
+  }
+
 </style>
 </head>
 <body>
-<div id="root"></div>
 
-<!-- animations.jsx inlined -->
-<script type="text/babel">
-(function() {
-  const { createContext, useContext, useState, useEffect, useRef, useCallback } = React;
-  const TimeContext = createContext({ time: 0, duration: 10, playing: false });
-  const SpriteContext = createContext(null);
+<div class="stage" id="stage">
 
-  const Easing = {
-    linear: t => t,
-    easeIn: t => t * t,
-    easeOut: t => 1 - (1 - t) * (1 - t),
-    easeInOut: t => t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2,
-    spring: t => {
-      const c = (2 * Math.PI) / 3;
-      return t === 0 ? 0 : t === 1 ? 1 : Math.pow(2, -10 * t) * Math.sin((t * 10 - 0.75) * c) + 1;
-    },
-  };
+  <div class="grain"></div>
+  <div class="watermark">HUASHU · DESIGN</div>
+  <div class="version-mark">V2 · 2026</div>
 
-  function interpolate(t, input, output, easing) {
-    const [inStart, inEnd] = input;
-    const [outStart, outEnd] = output;
-    if (t <= inStart) return outStart;
-    if (t >= inEnd) return outEnd;
-    let progress = (t - inStart) / (inEnd - inStart);
-    if (easing) progress = easing(progress);
-    return outStart + (outEnd - outStart) * progress;
-  }
+  <div class="composition">
 
-  function useTime() { return useContext(TimeContext).time; }
-  function useSprite() {
-    const sprite = useContext(SpriteContext);
-    return sprite || { t: 0, elapsed: 0, duration: 0 };
-  }
+    <!-- LEFT: design preview -->
+    <div class="preview-frame warm" id="preview">
+      <div class="browser-chrome">
+        <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+        <div class="url-bar">yourbrand.design</div>
+      </div>
+      <div class="preview-body">
+        <div class="preview-eyebrow">Agent Studio</div>
+        <div class="preview-title">为<span class="em">他们</span>造好<br/>工作的场所。</div>
+        <div class="preview-sub">一个设计系统，不等你打开；它在你睡觉时，已经把草稿交出来了。</div>
 
-  function Stage({ duration = 10, width = 1920, height = 1080, loop = true, children, bgColor = '#fff' }) {
-    const [time, setTime] = useState(0);
-    const [playing, setPlaying] = useState(true);
-    const [scale, setScale] = useState(1);
-    const rafRef = useRef(null);
-    const effectiveLoop = (typeof window !== 'undefined' && window.__recording) ? false : loop;
-
-    useEffect(() => {
-      function updateScale() {
-        const vw = window.innerWidth;
-        const vh = window.innerHeight - 56;
-        const s = Math.min(vw / width, vh / height);
-        setScale(s);
-      }
-      updateScale();
-      window.addEventListener('resize', updateScale);
-      return () => window.removeEventListener('resize', updateScale);
-    }, [width, height]);
-
-    useEffect(() => {
-      if (!playing) return;
-      let cancelled = false;
-      let last = null;
-      function tick(now) {
-        if (cancelled) return;
-        if (last === null) {
-          last = now;
-          if (typeof window !== 'undefined') window.__ready = true;
-        }
-        const delta = (now - last) / 1000;
-        last = now;
-        setTime(prev => {
-          const next = prev + delta;
-          if (next >= duration) return effectiveLoop ? 0 : duration - 0.001;
-          return next;
-        });
-        rafRef.current = requestAnimationFrame(tick);
-      }
-      const start = () => { if (!cancelled) rafRef.current = requestAnimationFrame(tick); };
-      if (document.fonts && document.fonts.ready) document.fonts.ready.then(start); else start();
-      return () => { cancelled = true; cancelAnimationFrame(rafRef.current); };
-    }, [playing, duration, effectiveLoop]);
-
-    const progress = time / duration;
-    const ctx = { time, duration, playing, setPlaying, setTime };
-
-    const canvasStyle = {
-      position: 'absolute',
-      top: '50%',
-      left: '50%',
-      transformOrigin: 'center center',
-      width,
-      height,
-      background: bgColor,
-      overflow: 'hidden',
-      transform: `translate(-50%, -50%) scale(${scale})`,
-    };
-
-    return (
-      <TimeContext.Provider value={ctx}>
-        <div style={{position:'fixed', inset:0, background:'#0c0c0c', display:'flex', flexDirection:'column'}}>
-          <div style={{flex:1, position:'relative', overflow:'hidden'}}>
-            <div style={canvasStyle}>{children}</div>
+        <div class="card-grid" id="cardGrid">
+          <div class="card">
+            <div class="card-icon"></div>
+            <div class="card-title">品牌资产</div>
+            <div class="card-text">Logo / 色板 / 字型的单一事实源。</div>
           </div>
-          <div className="no-record" style={{position:'fixed', bottom:0, left:0, right:0, background:'rgba(0,0,0,0.8)', backdropFilter:'blur(10px)', padding:'12px 20px', display:'flex', alignItems:'center', gap:16, color:'#fff', fontSize:12, zIndex:100}}>
-            <button onClick={()=>setPlaying(p=>!p)} style={{background:'none', border:'1px solid rgba(255,255,255,0.3)', color:'#fff', padding:'6px 14px', borderRadius:4, cursor:'pointer', fontSize:12}}>{playing?'⏸ 暂停':'▶ 播放'}</button>
-            <button onClick={()=>setTime(0)} style={{background:'none', border:'1px solid rgba(255,255,255,0.3)', color:'#fff', padding:'6px 14px', borderRadius:4, cursor:'pointer', fontSize:12}}>⏮ 开始</button>
-            <div style={{fontFamily:'ui-monospace, monospace', fontVariantNumeric:'tabular-nums', minWidth:90}}>{time.toFixed(2)}s / {duration.toFixed(2)}s</div>
-            <div style={{flex:1, height:4, background:'rgba(255,255,255,0.2)', borderRadius:2, position:'relative'}}>
-              <div style={{position:'absolute', top:0, left:0, height:'100%', width:`${progress*100}%`, background:'#fff', borderRadius:2}} />
-            </div>
+          <div class="card">
+            <div class="card-icon"></div>
+            <div class="card-title">原型工场</div>
+            <div class="card-text">写一句话，得到一个能点的 App。</div>
+          </div>
+          <div class="card">
+            <div class="card-icon"></div>
+            <div class="card-title">动效引擎</div>
+            <div class="card-text">时间轴即代码，25 到 60 帧随意切。</div>
+          </div>
+          <div class="card extra">
+            <div class="card-icon"></div>
+            <div class="card-title">文档工坊</div>
+            <div class="card-text">HTML 即 PPTX。</div>
+          </div>
+          <div class="card extra">
+            <div class="card-icon"></div>
+            <div class="card-title">信息图</div>
+            <div class="card-text">数据进，杂志出。</div>
+          </div>
+          <div class="card extra">
+            <div class="card-icon"></div>
+            <div class="card-title">专家评审</div>
+            <div class="card-text">五维打分，诚实的体检。</div>
+          </div>
+          <div class="card extra">
+            <div class="card-icon"></div>
+            <div class="card-title">方向顾问</div>
+            <div class="card-text">给你三条路选。</div>
+          </div>
+          <div class="card extra">
+            <div class="card-icon"></div>
+            <div class="card-title">Junior 模式</div>
+            <div class="card-text">先 show，再精修。</div>
+          </div>
+          <div class="card extra">
+            <div class="card-icon"></div>
+            <div class="card-title">品牌协议</div>
+            <div class="card-text">五步，不能跳。</div>
           </div>
         </div>
-      </TimeContext.Provider>
-    );
+      </div>
+    </div>
+
+    <!-- RIGHT: slider panel -->
+    <div class="slider-panel" id="panel">
+
+      <div class="anchor-line" id="anchor">
+        拨动<span class="em">即所得</span>
+      </div>
+
+      <!-- Slider 1 · 调色 -->
+      <div class="slider-item">
+        <div class="slider-label">
+          <span class="slider-name">调色</span>
+          <span class="slider-value" id="val1">warm</span>
+        </div>
+        <div class="track">
+          <div class="ticks">
+            <span class="tick"></span><span class="tick"></span><span class="tick"></span>
+            <span class="tick"></span><span class="tick"></span>
+          </div>
+          <div class="track-fill" id="fill1"></div>
+          <div class="knob" id="knob1"></div>
+        </div>
+      </div>
+
+      <!-- Slider 2 · 字型 -->
+      <div class="slider-item">
+        <div class="slider-label">
+          <span class="slider-name">字型</span>
+          <span class="slider-value" id="val2">serif</span>
+        </div>
+        <div class="track">
+          <div class="ticks">
+            <span class="tick"></span><span class="tick"></span><span class="tick"></span>
+            <span class="tick"></span><span class="tick"></span>
+          </div>
+          <div class="track-fill" id="fill2"></div>
+          <div class="knob" id="knob2"></div>
+        </div>
+      </div>
+
+      <!-- Slider 3 · 密度 -->
+      <div class="slider-item">
+        <div class="slider-label">
+          <span class="slider-name">密度</span>
+          <span class="slider-value" id="val3">sparse</span>
+        </div>
+        <div class="track">
+          <div class="ticks">
+            <span class="tick"></span><span class="tick"></span><span class="tick"></span>
+            <span class="tick"></span><span class="tick"></span>
+          </div>
+          <div class="track-fill" id="fill3"></div>
+          <div class="knob" id="knob3"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Cursor -->
+    <div class="cursor" id="cursor">
+      <svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+        <path d="M2 2 L2 16 L6 12 L9 18 L11 17 L8 11 L14 11 Z"
+              fill="white" stroke="#000" stroke-width="1.2" stroke-linejoin="round"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Stage dimmer (fades scene to black before panel sweeps in) -->
+  <div class="stage-dimmer" id="stageDimmer"></div>
+
+  <!-- Brand reveal layer -->
+  <div class="brand-panel" id="brandPanel">
+    <div class="brand-wordmark" id="brandMark">huashu<span class="accent">-</span>design</div>
+    <div class="brand-line" id="brandLine"></div>
+  </div>
+
+</div>
+
+<script>
+(function() {
+  // ---------- Fit stage ----------
+  const stage = document.getElementById('stage');
+  function rescale() {
+    const s = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+    stage.style.transform = `translate(-50%, -50%) scale(${s})`;
+  }
+  rescale();
+  window.addEventListener('resize', rescale);
+
+  // ---------- Animation ----------
+  const DURATION = 10.0; // seconds
+
+  const preview   = document.getElementById('preview');
+  const panel     = document.getElementById('panel');
+  const anchor    = document.getElementById('anchor');
+  const cursor    = document.getElementById('cursor');
+
+  const knob1 = document.getElementById('knob1');
+  const knob2 = document.getElementById('knob2');
+  const knob3 = document.getElementById('knob3');
+  const fill1 = document.getElementById('fill1');
+  const fill2 = document.getElementById('fill2');
+  const fill3 = document.getElementById('fill3');
+  const val1  = document.getElementById('val1');
+  const val2  = document.getElementById('val2');
+  const val3  = document.getElementById('val3');
+
+  const stageDimmer = document.getElementById('stageDimmer');
+  const brandPanel = document.getElementById('brandPanel');
+  const brandMark  = document.getElementById('brandMark');
+  const brandLine  = document.getElementById('brandLine');
+
+  // Easings
+  const expoOut = t => t === 1 ? 1 : 1 - Math.pow(2, -10 * t);
+  const expoIn  = t => t === 0 ? 0 : Math.pow(2, 10 * (t - 1));
+  const cubicInOut = t => t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3) / 2;
+  const cubicOut = t => 1 - Math.pow(1 - t, 3);
+
+  function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+  function lerp(t, t0, t1, v0, v1, ease) {
+    if (t <= t0) return v0;
+    if (t >= t1) return v1;
+    const k = (t - t0) / (t1 - t0);
+    return v0 + (v1 - v0) * (ease ? ease(k) : k);
+  }
+  function clampLerp(t, t0, t1) {
+    if (t <= t0) return 0;
+    if (t >= t1) return 1;
+    return (t - t0) / (t1 - t0);
   }
 
-  function Sprite({ start = 0, end, children, style }) {
-    const { time } = useContext(TimeContext);
-    const actualEnd = end == null ? Infinity : end;
-    if (time < start || time >= actualEnd) return null;
-    const duration = actualEnd - start;
-    const elapsed = time - start;
-    const t = duration === 0 ? 1 : Math.max(0, Math.min(1, elapsed / duration));
-    const spriteValue = { t, elapsed, duration, start, end: actualEnd };
-    return (
-      <SpriteContext.Provider value={spriteValue}>
-        <div style={{position:'absolute', inset:0, ...style}}>{children}</div>
-      </SpriteContext.Provider>
-    );
+  // Knob motion — drag feel: first 70% is a cubic ease (hand moving),
+  // final 15% is overshoot + snap to target (magnetic arrival).
+  function knobMotion(t, t0, t1, fromPct, toPct) {
+    if (t <= t0) return fromPct;
+    if (t >= t1) return toPct;
+    const k = (t - t0) / (t1 - t0);
+    const direction = toPct > fromPct ? 1 : -1;
+    const range = Math.abs(toPct - fromPct);
+
+    if (k < 0.72) {
+      // Main drag: cubic easeInOut feels like a hand moving
+      const e = cubicInOut(k / 0.72);
+      return fromPct + (toPct - fromPct) * e;
+    } else if (k < 0.85) {
+      // Overshoot past target by ~2%
+      const overK = (k - 0.72) / 0.13;
+      const overshoot = 2.2;
+      return toPct + direction * overshoot * Math.sin(overK * Math.PI);
+    } else {
+      // Settled at target
+      return toPct;
+    }
   }
 
-  window.Animations = { Stage, Sprite, useTime, useSprite, Easing, interpolate };
+  // Timeline (seconds, 10s total)
+  const T = {
+    stage_in:     [0.0, 1.0],       // frame + panel appear
+    anchor_in:    [0.8, 1.4],
+
+    // Slider 1 · palette: warm → cool (1.2s → 3.2s) — arrive at 3.0s
+    s1_cursor_to: [1.3, 1.9],
+    s1_drag:      [1.9, 2.9],
+    s1_settle:    [2.9, 3.1],
+
+    // Slider 2 · type: serif → sans
+    s2_cursor_to: [3.2, 3.7],
+    s2_drag:      [3.7, 4.7],
+    s2_settle:    [4.7, 4.9],
+
+    // Slider 3 · density: sparse → dense
+    s3_cursor_to: [5.0, 5.5],
+    s3_drag:      [5.5, 6.5],
+    s3_settle:    [6.5, 6.7],
+
+    hold:         [6.7, 8.0],
+
+    // Brand reveal (米色 walloff · 2s total)
+    scene_out:    [8.0, 8.3],   // main composition fade to black (0.3s)
+    brand_panel:  [8.3, 8.7],   // cream panel sweeps up from bottom, expoOut (0.4s)
+    brand_mark:   [8.7, 9.3],   // wordmark: wght 100→500 + y 20→0 + opacity 0→1 (0.6s)
+    brand_line:   [9.3, 9.7],   // orange line expands 0→280 from center (0.4s)
+    brand_hold:   [9.7, 10.0],  // hold final frame
+  };
+
+  // Slider-to-state logic. Value-changes happen at settle start.
+  let state = { palette: 'warm', type: 'serif', density: 'sparse' };
+  let lastStateHash = '';
+  function updatePreview() {
+    preview.classList.remove('warm', 'cool', 'sans', 'dense');
+    if (state.palette === 'warm') preview.classList.add('warm');
+    else preview.classList.add('cool');
+    if (state.type === 'sans') preview.classList.add('sans');
+    if (state.density === 'dense') preview.classList.add('dense');
+  }
+  updatePreview();
+
+  function setKnobState(knob, active) {
+    if (active) knob.classList.add('active');
+    else knob.classList.remove('active');
+  }
+
+  function setValueLabel(el, text) {
+    if (el.textContent !== text) el.textContent = text;
+  }
+
+  // ---------- Cursor path (in composition coords) ----------
+  // Composition uses grid: left column 1220 + 60 gap, panel is at right.
+  // We'll position cursor using .composition-relative absolute positioning.
+  // Cursor is child of .composition, whose padding is 130/100/140/140.
+  // So coords relative to .composition padding-box.
+  // Simpler: cursor is absolute in .stage coords since parent composition
+  // covers full stage. Use inline style left/top in px.
+
+  // Anchor positions (rough — will fine-tune):
+  const CURSOR_PARK   = { x: 1900, y: 1080 }; // off-screen bottom-right
+  // Slider tracks: panel starts around x≈1420, width 520. Each track spans that width.
+  // We'll measure actual rect at first tick.
+  let sliderRects = null;
+  function measureRects() {
+    const stageRect = stage.getBoundingClientRect();
+    const scale = stageRect.width / 1920;
+    const getTrackBox = (id) => {
+      const el = document.getElementById(id).parentElement; // .track
+      const r = el.getBoundingClientRect();
+      return {
+        left: (r.left - stageRect.left) / scale,
+        top:  (r.top  - stageRect.top)  / scale,
+        width:  r.width / scale,
+        height: r.height / scale,
+      };
+    };
+    sliderRects = {
+      s1: getTrackBox('knob1'),
+      s2: getTrackBox('knob2'),
+      s3: getTrackBox('knob3'),
+    };
+  }
+
+  function positionCursor(x, y, opacity) {
+    cursor.style.left = x + 'px';
+    cursor.style.top  = y + 'px';
+    cursor.style.opacity = opacity;
+  }
+
+  function knobLeft(id, pct) {
+    const el = document.getElementById(id);
+    el.style.left = pct + '%';
+  }
+  function fillWidth(id, pct) {
+    const el = document.getElementById(id);
+    el.style.width = pct + '%';
+  }
+
+  // Tick / render
+  let startTs = null;
+  let frameCount = 0;
+
+  function tick(ts) {
+    if (!startTs) startTs = ts;
+    const t = (ts - startTs) / 1000;
+
+    // Measure rects once
+    if (!sliderRects && frameCount > 1) {
+      measureRects();
+    }
+
+    // --- Stage in ---
+    const stageK = clampLerp(t, T.stage_in[0], T.stage_in[1]);
+    const stageOp = cubicOut(stageK);
+    preview.style.opacity = stageOp;
+    preview.style.transform = `rotateX(${lerp(t, T.stage_in[0], T.stage_in[1], 10, 6, cubicOut)}deg) rotateY(-4deg) translateY(${lerp(t, T.stage_in[0], T.stage_in[1], 20, 0, expoOut)}px)`;
+    panel.style.opacity = stageOp;
+    panel.style.transform = `translateX(${lerp(t, T.stage_in[0], T.stage_in[1], 30, 0, expoOut)}px)`;
+
+    // Anchor
+    const aK = clampLerp(t, T.anchor_in[0], T.anchor_in[1]);
+    anchor.style.opacity = cubicOut(aK);
+    anchor.style.transform = `translateY(${lerp(t, T.anchor_in[0], T.anchor_in[1], 10, 0, expoOut)}px)`;
+
+    // Snap point: when knob reaches target (72% of drag duration)
+    const s1SnapT = T.s1_drag[0] + (T.s1_drag[1] - T.s1_drag[0]) * 0.72;
+    const s2SnapT = T.s2_drag[0] + (T.s2_drag[1] - T.s2_drag[0]) * 0.72;
+    const s3SnapT = T.s3_drag[0] + (T.s3_drag[1] - T.s3_drag[0]) * 0.72;
+
+    // --- Slider 1: palette ---
+    // Knob 10% → 90%
+    const k1pct = knobMotion(t, T.s1_drag[0], T.s1_drag[1], 10, 90);
+    knobLeft('knob1', k1pct); fillWidth('fill1', k1pct);
+    setKnobState(knob1, t >= T.s1_cursor_to[0] && t < T.s1_settle[1] + 0.2);
+    if (t >= s1SnapT && state.palette !== 'cool') {
+      state.palette = 'cool'; updatePreview(); setValueLabel(val1, 'cool');
+    }
+
+    // --- Slider 2: type ---
+    const k2pct = knobMotion(t, T.s2_drag[0], T.s2_drag[1], 10, 90);
+    knobLeft('knob2', k2pct); fillWidth('fill2', k2pct);
+    setKnobState(knob2, t >= T.s2_cursor_to[0] && t < T.s2_settle[1] + 0.2);
+    if (t >= s2SnapT && state.type !== 'sans') {
+      state.type = 'sans'; updatePreview(); setValueLabel(val2, 'sans');
+    }
+
+    // --- Slider 3: density ---
+    const k3pct = knobMotion(t, T.s3_drag[0], T.s3_drag[1], 10, 90);
+    knobLeft('knob3', k3pct); fillWidth('fill3', k3pct);
+    setKnobState(knob3, t >= T.s3_cursor_to[0] && t < T.s3_settle[1] + 0.2);
+    if (t >= s3SnapT && state.density !== 'dense') {
+      state.density = 'dense'; updatePreview(); setValueLabel(val3, 'dense');
+    }
+
+    // --- Cursor choreography ---
+    if (sliderRects) {
+      const r1 = sliderRects.s1, r2 = sliderRects.s2, r3 = sliderRects.s3;
+      // Positions of knob at 10% and 90%
+      const k1Start = { x: r1.left + r1.width * 0.10, y: r1.top + r1.height/2 };
+      const k1End   = { x: r1.left + r1.width * 0.90, y: r1.top + r1.height/2 };
+      const k2Start = { x: r2.left + r2.width * 0.10, y: r2.top + r2.height/2 };
+      const k2End   = { x: r2.left + r2.width * 0.90, y: r2.top + r2.height/2 };
+      const k3Start = { x: r3.left + r3.width * 0.10, y: r3.top + r3.height/2 };
+      const k3End   = { x: r3.left + r3.width * 0.90, y: r3.top + r3.height/2 };
+
+      let cx = CURSOR_PARK.x, cy = CURSOR_PARK.y, co = 0;
+
+      if (t < T.s1_cursor_to[0]) {
+        // still off-screen (or just appeared)
+        cx = CURSOR_PARK.x; cy = CURSOR_PARK.y; co = 0;
+      } else if (t < T.s1_cursor_to[1]) {
+        // cursor flies to s1 knob start
+        const k = clampLerp(t, T.s1_cursor_to[0], T.s1_cursor_to[1]);
+        const e = cubicOut(k);
+        cx = lerp(t, T.s1_cursor_to[0], T.s1_cursor_to[1], CURSOR_PARK.x, k1Start.x, cubicOut);
+        cy = lerp(t, T.s1_cursor_to[0], T.s1_cursor_to[1], CURSOR_PARK.y, k1Start.y, cubicOut);
+        co = e;
+      } else if (t < T.s1_drag[1]) {
+        // dragging s1
+        cx = r1.left + (r1.width * k1pct / 100);
+        cy = r1.top + r1.height/2;
+        co = 1;
+      } else if (t < T.s2_cursor_to[0]) {
+        cx = k1End.x; cy = k1End.y; co = 1;
+      } else if (t < T.s2_cursor_to[1]) {
+        cx = lerp(t, T.s2_cursor_to[0], T.s2_cursor_to[1], k1End.x, k2Start.x, cubicInOut);
+        cy = lerp(t, T.s2_cursor_to[0], T.s2_cursor_to[1], k1End.y, k2Start.y, cubicInOut);
+        co = 1;
+      } else if (t < T.s2_drag[1]) {
+        cx = r2.left + (r2.width * k2pct / 100);
+        cy = r2.top + r2.height/2;
+        co = 1;
+      } else if (t < T.s3_cursor_to[0]) {
+        cx = k2End.x; cy = k2End.y; co = 1;
+      } else if (t < T.s3_cursor_to[1]) {
+        cx = lerp(t, T.s3_cursor_to[0], T.s3_cursor_to[1], k2End.x, k3Start.x, cubicInOut);
+        cy = lerp(t, T.s3_cursor_to[0], T.s3_cursor_to[1], k2End.y, k3Start.y, cubicInOut);
+        co = 1;
+      } else if (t < T.s3_drag[1]) {
+        cx = r3.left + (r3.width * k3pct / 100);
+        cy = r3.top + r3.height/2;
+        co = 1;
+      } else if (t < T.hold[1]) {
+        // fade out cursor
+        cx = k3End.x; cy = k3End.y;
+        co = lerp(t, T.s3_drag[1], T.hold[1], 1, 0, cubicOut);
+      }
+
+      positionCursor(cx, cy, co);
+    }
+
+    // --- Brand reveal (米色 walloff · aligned with hero-v10 signature) ---
+    // 1) Scene dimmer: composition fades to black (0.3s)
+    const soK = clampLerp(t, T.scene_out[0], T.scene_out[1]);
+    stageDimmer.style.opacity = cubicOut(soK);
+
+    // 2) Cream panel sweeps up from bottom, expoOut (0.4s)
+    const bpK = clampLerp(t, T.brand_panel[0], T.brand_panel[1]);
+    const panelY = lerp(t, T.brand_panel[0], T.brand_panel[1], 100, 0, expoOut);
+    brandPanel.style.transform = `translateY(${panelY}%)`;
+
+    // 3) Wordmark: font-weight 100→500 + y 20→0 + opacity 0→1, expoOut (0.6s)
+    const bmK = clampLerp(t, T.brand_mark[0], T.brand_mark[1]);
+    const bmE = expoOut(bmK);
+    const wght = 100 + (500 - 100) * bmE;
+    brandMark.style.opacity = bmE;
+    brandMark.style.transform = `translateY(${20 * (1 - bmE)}px)`;
+    brandMark.style.fontWeight = Math.round(wght);
+    brandMark.style.fontVariationSettings = `"wght" ${wght.toFixed(0)}`;
+
+    // 4) Orange line: width 0→280 from center, cubicOut (0.4s)
+    const blK = clampLerp(t, T.brand_line[0], T.brand_line[1]);
+    brandLine.style.width = (280 * cubicOut(blK)) + 'px';
+
+    frameCount++;
+
+    // Loop or stop
+    if (t < DURATION) {
+      requestAnimationFrame(tick);
+    } else {
+      if (window.__recording === true) {
+        // recording mode: hold last frame
+        return;
+      }
+      // Restart after 1s pause (for manual viewing)
+      setTimeout(() => {
+        startTs = null;
+        state = { palette: 'warm', type: 'serif', density: 'sparse' };
+        updatePreview();
+        setValueLabel(val1, 'warm'); setValueLabel(val2, 'serif'); setValueLabel(val3, 'sparse');
+        requestAnimationFrame(tick);
+      }, 900);
+    }
+  }
+
+  // Start animation after fonts ready
+  const startAnim = () => {
+    requestAnimationFrame((ts) => {
+      startTs = ts;
+      window.__ready = true; // signal for render-video.js
+      requestAnimationFrame(tick);
+    });
+  };
+
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(startAnim);
+  } else {
+    setTimeout(startAnim, 500);
+  }
 })();
 </script>
 
-<!-- Demo scene -->
-<script type="text/babel">
-const { Stage, Sprite, useTime, useSprite, Easing, interpolate } = window.Animations;
-
-// ── Design tokens ─────────────────────────────────────────
-const CREAM = '#FAF6EF';
-const INK = '#1a1a1a';
-const TERRA = '#C04A1A';
-const ASH = '#6b6b6b';
-const LINE = '#d9d2c5';
-const OLIVE = '#6a6b4e';
-const DEEP_BLUE = '#2a3552';
-
-const serif = "'Newsreader', 'Noto Serif SC', Georgia, serif";
-const sansCN = "'Noto Sans SC', -apple-system, sans-serif";
-const playfair = "'Playfair Display', Georgia, serif";
-const sans = "'Inter', -apple-system, sans-serif";
-const mono = "'JetBrains Mono', ui-monospace, monospace";
-
-// Palettes — the actual Tweak presets
-const PALETTES = {
-  warm:  { bg: CREAM,     accent: TERRA,       text: INK,    sub: ASH,    line: LINE,    name: '暖米 + 赤陶',  enName: 'WARM · TERRA' },
-  olive: { bg: '#f2efdf', accent: OLIVE,       text: '#2a2a1e', sub: '#7a7a5e', line: '#d4d1b8', name: '墨绿 + 鹅黄',  enName: 'OLIVE · CITRON' },
-  deep:  { bg: '#f4efe6', accent: DEEP_BLUE,   text: INK,    sub: '#5a6478', line: '#c9c3b3', name: '深蓝 + 沙金',  enName: 'DEEP · SAND' },
-};
-
-const FONTS = {
-  serif: { ui: serif, display: serif, name: 'Newsreader（衬线）' },
-  sans:  { ui: sansCN, display: sansCN, name: '思源黑体' },
-  play:  { ui: playfair, display: playfair, name: 'Playfair Display' },
-};
-
-// ── Scene 1: Title (0 – 3s) ────────────────────────────────
-function Scene1_Title() {
-  const { elapsed } = useSprite();
-  const labelOp = interpolate(elapsed, [0.2, 0.8], [0, 1]);
-  const mainY = interpolate(elapsed, [0.3, 1.3], [40, 0], Easing.easeOut);
-  const mainOp = interpolate(elapsed, [0.3, 1.1], [0, 1]);
-  const lineW = interpolate(elapsed, [1.1, 1.9], [0, 460]);
-  const subOp = interpolate(elapsed, [1.4, 2.1], [0, 1]);
-  const fadeOut = interpolate(elapsed, [2.6, 3.0], [1, 0], Easing.easeIn);
-
-  return (
-    <div style={{position:'absolute', inset:0, background:CREAM, opacity: fadeOut,
-      display:'flex', alignItems:'center', justifyContent:'center', flexDirection:'column'}}>
-      <div style={{fontFamily: mono, fontSize: 14, letterSpacing:'0.35em',
-        color: TERRA, marginBottom: 30, opacity: labelOp}}>
-        实时变体 · TWEAKS
-      </div>
-      <div style={{fontFamily: serif, fontSize: 120, fontWeight: 500, color: INK,
-        lineHeight: 1.05, letterSpacing: '-0.01em',
-        opacity: mainOp, transform: `translateY(${mainY}px)`}}>
-        一个 HTML · <span style={{fontStyle:'italic', color: TERRA}}>多种</span>设计
-      </div>
-      <div style={{height: 1, background: INK, width: lineW, marginTop: 40}} />
-      <div style={{fontFamily: serif, fontStyle: 'italic', fontSize: 22,
-        color: ASH, marginTop: 26, opacity: subOp, letterSpacing:'0.02em'}}>
-        不需要重新生成代码 · 只切参数
-      </div>
-    </div>
-  );
-}
-
-// ── Scene 2: Main stage — control panel + live card (3 – 12s) ──
-function Scene2_MainStage() {
-  const { elapsed } = useSprite();
-
-  // Decide current Tweaks state based on elapsed time inside the scene.
-  // Scene2 elapsed: 0 – 9s
-  //   0 – 4s : warm + serif + 40
-  //   4 – 7s : olive + serif + 40   (palette change @ 4s)
-  //   7 – 9s : olive + sans + 40    (font change @ 7s)
-  let palette = 'warm';
-  let font = 'serif';
-  const density = 40;
-
-  if (elapsed >= 4) palette = 'olive';
-  if (elapsed >= 7) font = 'sans';
-
-  // Ripple trigger times
-  const rippleTimes = [4, 7];
-  const ripples = rippleTimes.map(t => {
-    const e = elapsed - t;
-    if (e < 0 || e > 1.2) return null;
-    return { t, progress: e / 1.2 };
-  }).filter(Boolean);
-
-  // Fade-in intro
-  const introOp = interpolate(elapsed, [0, 0.4], [0, 1]);
-  const fadeOut = interpolate(elapsed, [8.6, 9.0], [1, 0]);
-
-  const pal = PALETTES[palette];
-  const fnt = FONTS[font];
-
-  return (
-    <div style={{position:'absolute', inset:0, background:CREAM,
-      display:'flex', opacity: introOp * fadeOut}}>
-      {/* Left: Control Panel (30%) */}
-      <ControlPanel palette={palette} font={font} density={density} elapsed={elapsed} />
-
-      {/* Right: Live Card (70%) */}
-      <div style={{flex: 1, position:'relative', padding: '60px 80px',
-        display:'flex', alignItems:'center', justifyContent:'center',
-        transition: 'background 600ms ease-in-out',
-        background: pal.bg}}>
-        <LiveCard palette={palette} font={font} density={density} />
-
-        {/* Ripples */}
-        {ripples.map((r, i) => (
-          <Ripple key={r.t} progress={r.progress}
-            x={r.t === 4 ? 180 : 180}
-            y={r.t === 4 ? 340 : 490} />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function ControlPanel({ palette, font, density, elapsed }) {
-  return (
-    <div style={{width: '30%', background: '#f2ece0',
-      borderRight: `1px solid ${LINE}`, padding: '60px 44px 40px',
-      display:'flex', flexDirection:'column', gap: 38,
-      fontFamily: sans}}>
-      <div>
-        <div style={{fontFamily: mono, fontSize: 11, letterSpacing:'0.35em',
-          color: TERRA, marginBottom: 6}}>
-          TWEAKS
-        </div>
-        <div style={{fontFamily: serif, fontSize: 28, fontWeight: 500, color: INK,
-          letterSpacing:'-0.01em'}}>
-          设计调参面板
-        </div>
-      </div>
-
-      {/* Group 1: palette */}
-      <ControlGroup label="01 · 配色方案" en="PALETTE">
-        <Radio checked={palette==='warm'}  label="暖米 + 赤陶"   swatches={[CREAM, TERRA]} />
-        <Radio checked={palette==='olive'} label="墨绿 + 鹅黄"   swatches={['#f2efdf', OLIVE]} />
-        <Radio checked={palette==='deep'}  label="深蓝 + 沙金"   swatches={['#f4efe6', DEEP_BLUE]} />
-      </ControlGroup>
-
-      {/* Group 2: font */}
-      <ControlGroup label="02 · 字型" en="TYPEFACE">
-        <Radio checked={font==='serif'} label="Newsreader（衬线）" fontFamily={serif} />
-        <Radio checked={font==='sans'}  label="思源黑体"         fontFamily={sansCN} />
-        <Radio checked={font==='play'}  label="Playfair Display" fontFamily={playfair} />
-      </ControlGroup>
-
-      {/* Group 3: density */}
-      <ControlGroup label="03 · 信息密度" en="DENSITY">
-        <div style={{position:'relative', height: 4, background:'#e0dbcc',
-          marginTop: 16, marginBottom: 10}}>
-          <div style={{position:'absolute', left: 0, top: 0, height:'100%',
-            width: `${density}%`, background: TERRA}} />
-          <div style={{position:'absolute', left: `${density}%`, top: -6,
-            transform:'translateX(-50%)', width: 16, height: 16,
-            borderRadius:'50%', background: TERRA,
-            boxShadow:'0 2px 6px rgba(0,0,0,0.15)'}} />
-        </div>
-        <div style={{display:'flex', justifyContent:'space-between',
-          fontFamily: mono, fontSize: 9, letterSpacing:'0.2em', color: ASH}}>
-          <span>克制</span><span style={{color: TERRA}}>标准</span><span>密集</span>
-        </div>
-      </ControlGroup>
-
-      <div style={{flex: 1}} />
-
-      <div style={{fontFamily: mono, fontSize: 10, letterSpacing:'0.12em',
-        color: ASH, lineHeight: 1.6, borderTop: `1px solid ${LINE}`,
-        paddingTop: 16}}>
-        localStorage 持久化<br/>
-        <span style={{color: TERRA}}>→</span> 刷新不丢
-      </div>
-    </div>
-  );
-}
-
-function ControlGroup({ label, en, children }) {
-  return (
-    <div>
-      <div style={{display:'flex', justifyContent:'space-between',
-        alignItems:'baseline', marginBottom: 14}}>
-        <div style={{fontFamily: serif, fontSize: 15, fontWeight: 500, color: INK}}>
-          {label}
-        </div>
-        <div style={{fontFamily: mono, fontSize: 9, letterSpacing:'0.25em',
-          color: ASH}}>{en}</div>
-      </div>
-      <div style={{display:'flex', flexDirection:'column', gap: 8}}>{children}</div>
-    </div>
-  );
-}
-
-function Radio({ checked, label, swatches, fontFamily }) {
-  return (
-    <div style={{display:'flex', alignItems:'center', gap: 12,
-      padding:'9px 12px', background: checked ? '#fff' : 'transparent',
-      border: `1px solid ${checked ? TERRA : 'transparent'}`,
-      transition:'all 240ms ease-out'}}>
-      <div style={{width: 14, height: 14, borderRadius:'50%',
-        border: `1.5px solid ${checked ? TERRA : '#b0a898'}`,
-        display:'flex', alignItems:'center', justifyContent:'center',
-        flexShrink: 0}}>
-        {checked && <div style={{width: 7, height: 7, borderRadius:'50%',
-          background: TERRA}} />}
-      </div>
-      <div style={{flex: 1, fontFamily: fontFamily || sans, fontSize: 13,
-        color: checked ? INK : '#4a4a4a'}}>{label}</div>
-      {swatches && (
-        <div style={{display:'flex', gap: 3}}>
-          {swatches.map((c, i) => (
-            <div key={i} style={{width: 12, height: 12, background: c,
-              border:'1px solid rgba(0,0,0,0.06)'}} />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function Ripple({ progress, x, y }) {
-  const size = progress * 420;
-  const op = 1 - progress;
-  return (
-    <div style={{position:'absolute', left: x, top: y,
-      width: size, height: size, borderRadius:'50%',
-      border: `2px solid ${TERRA}`, opacity: op,
-      transform: 'translate(-50%, -50%)',
-      pointerEvents:'none'}} />
-  );
-}
-
-function LiveCard({ palette, font, density }) {
-  const pal = PALETTES[palette];
-  const fnt = FONTS[font];
-
-  return (
-    <div style={{width: '100%', maxWidth: 880, background: '#fff',
-      border: `1px solid ${pal.line}`,
-      transition:'border-color 600ms ease-in-out',
-      position:'relative'}}>
-      {/* Header bar */}
-      <div style={{padding:'18px 32px', borderBottom:`1px solid ${pal.line}`,
-        display:'flex', justifyContent:'space-between', alignItems:'center',
-        transition:'border-color 600ms ease-in-out'}}>
-        <div style={{fontFamily: mono, fontSize: 11, letterSpacing:'0.3em',
-          color: pal.accent, transition:'color 600ms ease-in-out'}}>
-          LUMINA · v3.2
-        </div>
-        <div style={{fontFamily: mono, fontSize: 10, color: pal.sub,
-          letterSpacing:'0.15em', transition:'color 600ms ease-in-out'}}>
-          PALETTE · {pal.enName}
-        </div>
-      </div>
-
-      {/* Hero content */}
-      <div style={{padding:'56px 60px 48px', display:'grid',
-        gridTemplateColumns:'1.4fr 1fr', gap: 48}}>
-        <div>
-          <div style={{fontFamily: mono, fontSize: 11,
-            color: pal.accent, letterSpacing:'0.25em', marginBottom: 16,
-            transition:'color 600ms ease-in-out'}}>
-            READING · MEMORY
-          </div>
-          <div style={{fontFamily: fnt.display, fontSize: 68,
-            fontWeight: font === 'sans' ? 700 : 500, color: pal.text,
-            lineHeight: 1.05, letterSpacing:'-0.02em',
-            transition:'color 600ms ease-in-out',
-            marginBottom: 14}}>
-            Lumina
-          </div>
-          <div style={{fontFamily: fnt.ui,
-            fontStyle: font === 'play' ? 'italic' : 'normal',
-            fontSize: 22, color: pal.sub, lineHeight: 1.4,
-            letterSpacing: font === 'sans' ? 0 : '0.01em',
-            transition:'color 600ms ease-in-out',
-            marginBottom: 28}}>
-            阅读记忆 · 让每一次阅读被看见
-          </div>
-          <div style={{fontFamily: fnt.ui, fontSize: 14, color: pal.text,
-            lineHeight: 1.7, opacity: 0.78, marginBottom: 32,
-            transition:'color 600ms ease-in-out'}}>
-            把你读过的每一行、标注过的每一段，<br/>
-            汇成一条属于你的阅读河流。
-          </div>
-          <div style={{display:'flex', gap: 12, alignItems:'center'}}>
-            <div style={{padding:'12px 26px', background: pal.accent,
-              color:'#fff', fontFamily: fnt.ui, fontSize: 13,
-              letterSpacing: font === 'sans' ? '0.05em' : '0.12em',
-              transition:'background 600ms ease-in-out'}}>
-              {font === 'sans' ? '开始使用' : 'Start Reading'}
-            </div>
-            <div style={{fontFamily: mono, fontSize: 11, color: pal.sub,
-              letterSpacing:'0.2em',
-              transition:'color 600ms ease-in-out'}}>
-              FREE · BETA
-            </div>
-          </div>
-        </div>
-
-        {/* Right image block */}
-        <div style={{background: pal.bg,
-          border: `1px solid ${pal.line}`,
-          transition:'all 600ms ease-in-out',
-          aspectRatio: '3 / 4', position:'relative', overflow:'hidden'}}>
-          {/* Abstract book spine illustration */}
-          <svg width="100%" height="100%" viewBox="0 0 300 400"
-            preserveAspectRatio="xMidYMid slice">
-            {[0,1,2,3,4,5].map(i => (
-              <rect key={i} x={40 + i * 35} y={60 + (i % 2) * 20}
-                width={26} height={280 - (i % 3) * 30}
-                fill="none" stroke={pal.accent}
-                strokeWidth={i === 2 ? 2 : 1}
-                opacity={0.55 + (i === 2 ? 0.4 : 0)}
-                style={{transition:'stroke 600ms ease-in-out'}} />
-            ))}
-            <circle cx={150} cy={200} r={58} fill="none"
-              stroke={pal.accent} strokeWidth={1.5} opacity={0.5}
-              style={{transition:'stroke 600ms ease-in-out'}} />
-            <line x1={40} y1={350} x2={260} y2={350}
-              stroke={pal.text} strokeWidth={0.8} opacity={0.5}
-              style={{transition:'stroke 600ms ease-in-out'}} />
-          </svg>
-          <div style={{position:'absolute', bottom: 16, left: 18,
-            fontFamily: mono, fontSize: 9, letterSpacing:'0.2em',
-            color: pal.sub,
-            transition:'color 600ms ease-in-out'}}>
-            FIG. 01 — SHELF
-          </div>
-        </div>
-      </div>
-
-      {/* Footer meta */}
-      <div style={{padding:'14px 32px', borderTop:`1px solid ${pal.line}`,
-        display:'flex', justifyContent:'space-between',
-        fontFamily: mono, fontSize: 10, letterSpacing:'0.2em',
-        color: pal.sub,
-        transition:'all 600ms ease-in-out'}}>
-        <span>DENSITY · {density}</span>
-        <span>FONT · {font.toUpperCase()}</span>
-        <span>TWEAK ID · #{palette}-{font}-{density}</span>
-      </div>
-    </div>
-  );
-}
-
-// ── Scene 3: Code view (12 – 17s) ─────────────────────────
-function Scene3_CodeView() {
-  const { elapsed } = useSprite();
-  const introOp = interpolate(elapsed, [0, 0.5], [0, 1]);
-  const fadeOut = interpolate(elapsed, [4.6, 5.0], [1, 0]);
-
-  // Code typing effect
-  const fullCode = `// Tweaks via localStorage + CSS vars
-const tweaks = {
-  palette: 'warm',   // ← user 选
-  font:    'serif',
-  density: 40,
-};
-
-document.documentElement.style
-  .setProperty(
-    '--accent',
-    PALETTES[tweaks.palette].accent
-  );
-
-localStorage.setItem(
-  'tweaks', JSON.stringify(tweaks)
-);`;
-
-  const typeProgress = Math.max(0, Math.min(1, (elapsed - 0.6) / 2.4));
-  const visibleChars = Math.floor(fullCode.length * typeProgress);
-  const visibleCode = fullCode.slice(0, visibleChars);
-  const cursorBlink = Math.floor(elapsed * 2.5) % 2 === 0 && typeProgress < 1;
-
-  return (
-    <div style={{position:'absolute', inset:0, background:CREAM,
-      display:'flex', flexDirection:'column', opacity: introOp * fadeOut,
-      padding:'60px 80px'}}>
-      <div style={{display:'flex', justifyContent:'space-between',
-        alignItems:'baseline', marginBottom: 36}}>
-        <div>
-          <div style={{fontFamily: mono, fontSize: 12, letterSpacing:'0.35em',
-            color: TERRA, marginBottom: 6}}>
-            UNDER THE HOOD
-          </div>
-          <div style={{fontFamily: serif, fontSize: 52, fontWeight: 500,
-            color: INK, letterSpacing:'-0.01em'}}>
-            原理 · <span style={{fontStyle:'italic', color: TERRA}}>一行配置</span>，无限变体
-          </div>
-        </div>
-        <div style={{fontFamily: serif, fontStyle:'italic', fontSize: 18,
-          color: ASH, textAlign:'right', lineHeight: 1.5}}>
-          纯前端 · 无后端依赖<br/>
-          <span style={{fontSize: 14}}>刷新保留状态</span>
-        </div>
-      </div>
-
-      <div style={{display:'grid', gridTemplateColumns:'1fr 1.4fr', gap: 40,
-        flex: 1}}>
-        {/* Left: simplified tweak visualization */}
-        <div style={{background:'#fff', border:`1px solid ${LINE}`,
-          padding: 36, display:'flex', flexDirection:'column', gap: 28}}>
-          <div style={{fontFamily: mono, fontSize: 11, letterSpacing:'0.3em',
-            color: TERRA}}>TWEAK · STATE</div>
-
-          <MiniRow label="palette" value="warm" swatch={TERRA} />
-          <MiniRow label="font"    value="serif" />
-          <MiniRow label="density" value="40" />
-
-          <div style={{height: 1, background: LINE, margin:'8px 0'}} />
-
-          <div style={{fontFamily: serif, fontStyle:'italic', fontSize: 16,
-            color: ASH, lineHeight: 1.55}}>
-            三个参数的组合空间：<br/>
-            <span style={{color: TERRA, fontFamily: mono, fontStyle:'normal',
-              fontSize: 14}}>3 × 3 × ∞ = 无限</span>
-          </div>
-
-          <div style={{flex: 1}} />
-
-          <div style={{fontFamily: mono, fontSize: 10, color: ASH,
-            letterSpacing:'0.15em', lineHeight: 1.7}}>
-            → 改代码：不必要<br/>
-            → 重新生成：不必要<br/>
-            → 只改变量：30ms 生效
-          </div>
-        </div>
-
-        {/* Right: code block */}
-        <div style={{background:'#0e1016', padding:'28px 32px',
-          fontFamily: mono, fontSize: 15, color:'#d4c9b5',
-          lineHeight: 1.7, position:'relative', overflow:'hidden'}}>
-          <div style={{display:'flex', gap: 8, marginBottom: 20}}>
-            <div style={{width: 10, height: 10, borderRadius:'50%',
-              background:'#ff5f57'}} />
-            <div style={{width: 10, height: 10, borderRadius:'50%',
-              background:'#febc2e'}} />
-            <div style={{width: 10, height: 10, borderRadius:'50%',
-              background:'#28c840'}} />
-            <div style={{marginLeft: 14, fontSize: 10, color:'#888',
-              letterSpacing:'0.15em'}}>tweaks.js</div>
-          </div>
-          <pre style={{whiteSpace:'pre-wrap', margin: 0,
-            fontFamily: mono, fontSize: 15, lineHeight: 1.65}}>
-            <CodeColorize text={visibleCode} />
-            {cursorBlink && <span style={{color:'#ff6a3d'}}>▌</span>}
-          </pre>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function MiniRow({ label, value, swatch }) {
-  return (
-    <div style={{display:'flex', alignItems:'center', gap: 14}}>
-      <div style={{fontFamily: mono, fontSize: 11, color: ASH,
-        letterSpacing:'0.2em', width: 80}}>{label}</div>
-      <div style={{flex: 1, fontFamily: mono, fontSize: 14, color: INK}}>
-        {value}
-      </div>
-      {swatch && (
-        <div style={{width: 14, height: 14, background: swatch}} />
-      )}
-    </div>
-  );
-}
-
-// Very light syntax coloring
-function CodeColorize({ text }) {
-  const lines = text.split('\n');
-  return (
-    <>
-      {lines.map((line, i) => (
-        <span key={i}>
-          {colorizeLine(line)}
-          {'\n'}
-        </span>
-      ))}
-    </>
-  );
-}
-
-function colorizeLine(line) {
-  const parts = [];
-  let rest = line;
-
-  // comment
-  const cIdx = rest.indexOf('//');
-  if (cIdx >= 0) {
-    const before = rest.slice(0, cIdx);
-    const comment = rest.slice(cIdx);
-    return (
-      <>
-        {tokenize(before)}
-        <span style={{color:'#6a7d6a'}}>{comment}</span>
-      </>
-    );
-  }
-  return tokenize(line);
-}
-
-function tokenize(s) {
-  // keywords + strings
-  const kw = ['const', 'let', 'var', 'function', 'return'];
-  const words = s.split(/(\s+|[{}();,=.:'])/);
-  return words.map((w, i) => {
-    if (kw.includes(w)) return <span key={i} style={{color:'#c79cff'}}>{w}</span>;
-    if (/^'[^']*'$/.test(w)) return <span key={i} style={{color:'#ffb86c'}}>{w}</span>;
-    if (/^[0-9]+$/.test(w)) return <span key={i} style={{color:'#ff6a3d'}}>{w}</span>;
-    if (['palette', 'font', 'density', 'tweaks', 'PALETTES', 'accent'].includes(w)) {
-      return <span key={i} style={{color:'#8be9fd'}}>{w}</span>;
-    }
-    if (['document', 'localStorage'].includes(w)) {
-      return <span key={i} style={{color:'#ff79c6'}}>{w}</span>;
-    }
-    return <span key={i}>{w}</span>;
-  });
-}
-
-// ── Scene 4: Finale (17 – 20s) ────────────────────────────
-function Scene4_Final() {
-  const { elapsed } = useSprite();
-  const labelOp = interpolate(elapsed, [0.1, 0.7], [0, 1]);
-  const mainY = interpolate(elapsed, [0.2, 1.2], [30, 0], Easing.easeOut);
-  const mainOp = interpolate(elapsed, [0.2, 1.0], [0, 1]);
-  const lineW = interpolate(elapsed, [1.0, 1.8], [0, 540]);
-  const dimsOp = interpolate(elapsed, [1.3, 2.1], [0, 1]);
-
-  const dimensions = ['配色', '字型', '密度', '布局', '动画速度'];
-
-  return (
-    <div style={{position:'absolute', inset:0, background:CREAM,
-      display:'flex', alignItems:'center', justifyContent:'center',
-      flexDirection:'column'}}>
-      <div style={{fontFamily: mono, fontSize: 12, letterSpacing:'0.4em',
-        color: TERRA, marginBottom: 26, opacity: labelOp}}>
-        TWEAKS · EVERYTHING IS A VARIABLE
-      </div>
-      <div style={{fontFamily: serif, fontSize: 108, fontWeight: 500,
-        color: INK, lineHeight: 1.05, letterSpacing:'-0.01em',
-        opacity: mainOp, transform: `translateY(${mainY}px)`,
-        textAlign:'center'}}>
-        一个源文件 · <span style={{fontStyle:'italic', color: TERRA}}>无限</span>变体
-      </div>
-      <div style={{height: 1, background: INK, width: lineW, marginTop: 38}} />
-
-      <div style={{marginTop: 36, display:'flex', gap: 10,
-        opacity: dimsOp, alignItems:'center'}}>
-        {dimensions.map((d, i) => (
-          <React.Fragment key={i}>
-            {i > 0 && (
-              <span style={{fontFamily: mono, fontSize: 14,
-                color: LINE, margin:'0 2px'}}>·</span>
-            )}
-            <span style={{fontFamily: mono, fontSize: 14,
-              letterSpacing:'0.2em',
-              color: i === 0 ? TERRA : ASH,
-              padding:'6px 14px',
-              border: `1px solid ${i === 0 ? TERRA : LINE}`}}>
-              {d}
-            </span>
-          </React.Fragment>
-        ))}
-      </div>
-
-      <div style={{fontFamily: serif, fontStyle:'italic', fontSize: 20,
-        color: ASH, marginTop: 36, opacity: dimsOp,
-        maxWidth: 720, textAlign:'center', lineHeight: 1.5}}>
-        设计不是一次性的结果 ——<br/>
-        而是一组可以随时拨动的旋钮
-      </div>
-    </div>
-  );
-}
-
-// ── Watermark ─────────────────────────────────────────────
-function Watermark() {
-  return (
-    <div style={{position:'absolute', bottom: 24, right: 32,
-      fontSize: 11, color: 'rgba(0,0,0,0.38)', letterSpacing:'0.15em',
-      fontFamily: mono, pointerEvents:'none', zIndex: 100}}>
-      Created by Huashu-Design
-    </div>
-  );
-}
-
-// ── Main composition ──────────────────────────────────────
-function App() {
-  return (
-    <Stage duration={20} width={1920} height={1080} bgColor={CREAM}>
-      <Sprite start={0}  end={3}><Scene1_Title /></Sprite>
-      <Sprite start={3}  end={12}><Scene2_MainStage /></Sprite>
-      <Sprite start={12} end={17}><Scene3_CodeView /></Sprite>
-      <Sprite start={17} end={20}><Scene4_Final /></Sprite>
-      <Watermark />
-    </Stage>
-  );
-}
-
-ReactDOM.createRoot(document.getElementById('root')).render(<App />);
-</script>
 </body>
 </html>

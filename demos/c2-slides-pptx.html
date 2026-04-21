@@ -1,978 +1,1055 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
+<!doctype html>
+<html lang="zh-Hans">
 <head>
-<meta charset="UTF-8">
-<title>Huashu-Design · Slides → PPTX</title>
-<script crossorigin src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
-<script crossorigin src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
-<script src="https://unpkg.com/@babel/standalone@7.25.6/babel.min.js"></script>
+<meta charset="utf-8" />
+<title>c2-slides-pptx · 中文版 · v2</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,300;1,6..72,400;1,6..72,500&family=Noto+Serif+SC:wght@300;400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300..700;1,8..60,300..700&family=Noto+Serif+SC:wght@300;400;500;600&family=Inter:wght@100;200;300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { width: 100%; height: 100%; overflow: hidden; }
-  body {
-    background: #0c0c0c;
-    font-family: 'Newsreader', 'Noto Serif SC', Georgia, serif;
-    color: #1a1a1a;
-    -webkit-font-smoothing: antialiased;
-    text-rendering: optimizeLegibility;
+  :root {
+    --bg: #000000;
+    --ink: #FFFFFF;
+    --ink-80: rgba(255,255,255,0.82);
+    --ink-60: rgba(255,255,255,0.58);
+    --muted: rgba(255,255,255,0.40);
+    --dim: rgba(255,255,255,0.18);
+    --hairline: rgba(255,255,255,0.12);
+    --accent: #D97757;
+    --accent-deep: #B85D3D;
+    --cd-bg: #F5F4F0;
+    --cd-panel: #FFFFFF;
+    --cd-ink: #1A1918;
+    --cd-dim: #8B867E;
+    --cd-hair: rgba(0,0,0,0.08);
+
+    --serif-cn: "Noto Serif SC", "Source Han Serif SC", serif;
+    --serif-en: "Source Serif 4", Georgia, serif;
+    --sans: "Inter", -apple-system, "PingFang SC", system-ui, sans-serif;
+    --mono: "JetBrains Mono", "SF Mono", ui-monospace, monospace;
   }
+  html, body {
+    margin: 0; padding: 0;
+    background: #000;
+    overflow: hidden;
+    font-family: var(--sans);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+  }
+  * { box-sizing: border-box; }
+
+  .stage {
+    position: fixed;
+    top: 50%; left: 50%;
+    width: 1920px; height: 1080px;
+    transform-origin: center center;
+    background: var(--bg);
+    overflow: hidden;
+  }
+
+  /* Film grain (2% opacity) */
+  .stage::after {
+    content: '';
+    position: absolute; inset: 0;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.5 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+    opacity: 0.025;
+    pointer-events: none;
+    mix-blend-mode: overlay;
+    z-index: 200;
+  }
+
+  .watermark-tl {
+    position: absolute;
+    top: 40px; left: 56px;
+    font-family: var(--mono);
+    font-size: 14px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.16);
+    z-index: 180;
+    pointer-events: none;
+  }
+
+  /* ====== Beat 1: browser-fullscreen deck ====== */
+  .beat1 {
+    position: absolute; inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 1;
+  }
+
+  .deck-window {
+    width: 1400px;
+    height: 788px;
+    border-radius: 14px;
+    background: #101010;
+    border: 1px solid var(--hairline);
+    box-shadow: 0 40px 120px -30px rgba(217,119,87,0.18),
+                0 0 0 1px rgba(255,255,255,0.03);
+    position: relative;
+    will-change: transform, opacity;
+  }
+  .deck-window .deck-body-wrap {
+    position: absolute;
+    top: 44px; left: 0; right: 0; bottom: 0;
+    border-radius: 0 0 14px 14px;
+    overflow: hidden;
+    background: #0A0A0A;
+  }
+  .deck-chrome {
+    height: 44px;
+    background: #161616;
+    border-bottom: 1px solid var(--hairline);
+    display: flex;
+    align-items: center;
+    padding: 0 18px;
+    gap: 14px;
+  }
+  .deck-chrome .traffic {
+    display: flex; gap: 8px;
+  }
+  .deck-chrome .traffic .d {
+    width: 11px; height: 11px; border-radius: 50%;
+    background: var(--hairline);
+  }
+  .deck-chrome .url {
+    flex: 1;
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 0.02em;
+  }
+  .deck-chrome .page-count {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+    min-width: 60px;
+    text-align: right;
+  }
+
+  .deck-slide {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    background: #0A0A0A;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 96px 120px;
+    will-change: transform, opacity;
+  }
+  .deck-slide .eyebrow {
+    font-family: var(--mono);
+    font-size: 14px;
+    color: var(--accent);
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+  }
+  .deck-slide h1 {
+    font-family: var(--serif-cn);
+    font-size: 92px;
+    font-weight: 500;
+    line-height: 1.08;
+    color: var(--ink);
+    margin: 0 0 28px 0;
+    letter-spacing: -0.01em;
+  }
+  .deck-slide .sub {
+    font-family: var(--sans);
+    font-size: 22px;
+    color: var(--ink-60);
+    line-height: 1.5;
+    max-width: 780px;
+  }
+  .deck-slide .hairline {
+    margin-top: 48px;
+    width: 80px;
+    height: 2px;
+    background: var(--accent);
+  }
+
+  /* Key press indicator — sits below the window */
+  .key-hint {
+    position: absolute;
+    top: calc(50% + 440px);
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--muted);
+    letter-spacing: 0.14em;
+    opacity: 0;
+    will-change: opacity;
+    z-index: 30;
+  }
+  .key-hint .kbd {
+    display: inline-flex;
+    align-items: center; justify-content: center;
+    width: 36px; height: 36px;
+    border: 1px solid var(--hairline);
+    border-radius: 6px;
+    background: rgba(255,255,255,0.04);
+    color: var(--ink-80);
+    font-size: 14px;
+    will-change: background, color, transform;
+  }
+
+  /* ====== Beat 2: split screen — HTML left, PowerPoint right ====== */
+  .beat2 {
+    position: absolute; inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 56px;
+    opacity: 0;
+    padding: 0 96px;
+    will-change: opacity;
+  }
+
+  .split-window {
+    width: 820px;
+    height: 580px;
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+    will-change: transform, opacity;
+  }
+
+  /* Left: HTML deck shrunk */
+  .split-left {
+    background: #0A0A0A;
+    border: 1px solid var(--hairline);
+    box-shadow: 0 30px 80px -30px rgba(0,0,0,0.6);
+  }
+  .split-left .mini-chrome {
+    height: 30px;
+    background: #161616;
+    border-bottom: 1px solid var(--hairline);
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    gap: 8px;
+  }
+  .split-left .mini-chrome .d {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--hairline);
+  }
+  .split-left .mini-chrome .label {
+    margin-left: 10px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+  }
+  .split-left .mini-slide {
+    padding: 56px 64px;
+    height: calc(100% - 30px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .split-left .mini-eye {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  .split-left .mini-title {
+    font-family: var(--serif-cn);
+    font-size: 54px;
+    font-weight: 500;
+    line-height: 1.1;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+  .split-left .mini-sub {
+    margin-top: 20px;
+    font-family: var(--sans);
+    font-size: 15px;
+    color: var(--ink-60);
+    line-height: 1.5;
+  }
+  .split-left .mini-hair {
+    margin-top: 28px;
+    width: 52px; height: 2px;
+    background: var(--accent);
+  }
+
+  /* Right: PowerPoint chrome */
+  .split-right {
+    background: #F3F2EE;
+    border: 1px solid rgba(0,0,0,0.2);
+    box-shadow: 0 30px 80px -30px rgba(0,0,0,0.6);
+  }
+  .ppt-titlebar {
+    height: 32px;
+    background: #C44A36;
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    gap: 10px;
+    color: #fff;
+    font-family: var(--sans);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+  }
+  .ppt-titlebar .pp-logo {
+    width: 18px; height: 18px;
+    background: #fff;
+    border-radius: 2px;
+    display: inline-flex;
+    align-items: center; justify-content: center;
+    color: #C44A36;
+    font-weight: 700;
+    font-size: 11px;
+    font-family: var(--sans);
+  }
+  .ppt-titlebar .title-text { opacity: 0.92; }
+  .ppt-titlebar .win-dots {
+    margin-left: auto;
+    display: flex; gap: 10px;
+    opacity: 0.7;
+  }
+  .ppt-titlebar .win-dots span {
+    width: 10px; height: 10px; border: 1px solid rgba(255,255,255,0.7);
+    border-radius: 1px;
+  }
+
+  .ppt-toolbar {
+    height: 40px;
+    background: #EAE8E3;
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    gap: 14px;
+    font-family: var(--sans);
+    font-size: 12px;
+    color: #4A4843;
+  }
+  .ppt-toolbar .tool {
+    display: flex; align-items: center; gap: 6px;
+    padding: 4px 10px;
+    border-radius: 4px;
+  }
+  .ppt-toolbar .tool.active {
+    background: #fff;
+    border: 1px solid rgba(0,0,0,0.08);
+    color: var(--cd-ink);
+  }
+  .ppt-toolbar .tool .ico {
+    width: 14px; height: 14px;
+    border: 1px solid currentColor;
+    border-radius: 2px;
+    opacity: 0.7;
+  }
+  .ppt-toolbar .font-name {
+    padding: 4px 10px;
+    background: #fff;
+    border: 1px solid rgba(0,0,0,0.12);
+    border-radius: 3px;
+    min-width: 140px;
+    font-size: 12px;
+    color: var(--cd-ink);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .ppt-toolbar .divider {
+    width: 1px; height: 20px;
+    background: rgba(0,0,0,0.08);
+  }
+
+  /* PPT canvas (the actual slide) */
+  .ppt-canvas {
+    height: calc(100% - 32px - 40px);
+    background: #D8D4CB;
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  .ppt-slide {
+    background: #0A0A0A;
+    border-radius: 3px;
+    width: 100%;
+    height: 100%;
+    padding: 56px 64px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+  }
+  .ppt-slide .ppt-eye {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  .ppt-slide .ppt-title-frame {
+    position: relative;
+    display: inline-block;
+    padding: 6px 10px;
+    margin: -6px -10px;
+    border-radius: 2px;
+    transition: box-shadow 0.12s ease;
+    align-self: flex-start;
+    max-width: fit-content;
+    min-width: 160px;
+  }
+  .ppt-slide .ppt-title-frame.selected {
+    box-shadow:
+      0 0 0 1px rgba(217,119,87,0.0),
+      inset 0 0 0 0 rgba(217,119,87,0.0);
+  }
+  .ppt-slide .ppt-title-frame.editing {
+    box-shadow:
+      0 0 0 1.5px var(--accent),
+      0 0 0 3px rgba(217,119,87,0.2);
+  }
+  .ppt-slide .ppt-title {
+    font-family: var(--serif-cn);
+    font-size: 54px;
+    font-weight: 500;
+    line-height: 1.1;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+    display: inline;
+    position: relative;
+  }
+  .ppt-slide .edit-caret {
+    display: inline-block;
+    width: 2px;
+    height: 52px;
+    background: var(--accent);
+    vertical-align: -8px;
+    margin: 0 2px;
+    opacity: 0;
+  }
+  .ppt-slide .ppt-sub {
+    margin-top: 20px;
+    font-family: var(--sans);
+    font-size: 15px;
+    color: var(--ink-60);
+    line-height: 1.5;
+  }
+  .ppt-slide .ppt-hair {
+    margin-top: 28px;
+    width: 52px; height: 2px;
+    background: var(--accent);
+  }
+  /* Selection handles (corners) */
+  .ppt-slide .ppt-title-frame .handle {
+    position: absolute;
+    width: 8px; height: 8px;
+    background: var(--accent);
+    border: 1.5px solid #fff;
+    border-radius: 1px;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .ppt-slide .ppt-title-frame .handle.tl { top: -4px; left: -4px; }
+  .ppt-slide .ppt-title-frame .handle.tr { top: -4px; right: -4px; }
+  .ppt-slide .ppt-title-frame .handle.bl { bottom: -4px; left: -4px; }
+  .ppt-slide .ppt-title-frame .handle.br { bottom: -4px; right: -4px; }
+  .ppt-slide .ppt-title-frame.selected .handle { opacity: 1; }
+  .ppt-slide .ppt-title-frame.editing .handle { opacity: 0; }
+
+  /* Mouse cursor */
+  .cursor {
+    position: absolute;
+    top: 0; left: 0;
+    width: 22px; height: 30px;
+    pointer-events: none;
+    z-index: 50;
+    opacity: 0;
+    will-change: transform, opacity;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+  }
+  .cursor svg { width: 100%; height: 100%; }
+
+  /* Double-click ripple */
+  .dblclick-ripple {
+    position: absolute;
+    top: 0; left: 0;
+    width: 20px; height: 20px;
+    border: 2px solid var(--accent);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 45;
+    opacity: 0;
+    will-change: transform, opacity;
+  }
+
+  /* Connection line between two windows */
+  .connector {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 56px;
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    will-change: opacity;
+    z-index: 10;
+  }
+  .connector svg { width: 100%; height: 100%; }
+  .connector-label {
+    position: absolute;
+    top: calc(50% + 72px);
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--accent);
+    letter-spacing: 0.12em;
+    white-space: nowrap;
+    opacity: 0;
+    will-change: opacity;
+  }
+
+  /* Stage labels above windows */
+  .split-label {
+    position: absolute;
+    top: -48px;
+    left: 0;
+    font-family: var(--mono);
+    font-size: 16px;
+    color: var(--ink-60);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    opacity: 0;
+    will-change: opacity;
+    white-space: nowrap;
+  }
+  .split-label .em { color: var(--accent); }
+
+  /* ====== Brand Reveal (米色面板 · hero-v10 系列 signature) ====== */
+  .brand-panel {
+    position: absolute;
+    inset: 0;
+    background: var(--cd-bg);
+    transform: translateY(100%);
+    will-change: transform;
+    z-index: 80;
+  }
+  .brand-reveal {
+    position: absolute;
+    inset: 0;
+    z-index: 81;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    will-change: opacity;
+  }
+  .brand-reveal .brand-wordmark {
+    font-family: var(--serif-en);
+    font-size: 72px;
+    font-weight: 100;
+    font-variation-settings: "wght" 100;
+    letter-spacing: -0.01em;
+    color: var(--cd-ink);
+    line-height: 1;
+    opacity: 0;
+    will-change: opacity, transform, font-variation-settings;
+  }
+  .brand-reveal .brand-wordmark .accent {
+    color: var(--accent);
+    font-weight: inherit;
+  }
+  .brand-reveal .brand-line {
+    width: 0;
+    height: 2px;
+    background: var(--accent);
+    margin-top: 60px;
+    will-change: width;
+  }
+
 </style>
 </head>
 <body>
-<div id="root"></div>
 
-<!-- animations.jsx inlined -->
-<script type="text/babel">
+<div class="stage" id="stage">
+  <div class="watermark-tl">HUASHU · DESIGN</div>
+
+  <!-- ====== Beat 1 ====== -->
+  <div class="beat1" id="beat1">
+    <div class="deck-window" id="deckWindow">
+      <div class="deck-chrome">
+        <div class="traffic"><span class="d"></span><span class="d"></span><span class="d"></span></div>
+        <div class="url">localhost:8080 / deck · 全屏演讲</div>
+        <div class="page-count" id="pageCount">3 / 12</div>
+      </div>
+
+      <div class="deck-body-wrap">
+        <div class="deck-slide" id="slideA">
+          <div class="eyebrow">AI 心理学 · 第 3 节</div>
+          <h1>心智的<br/>可塑性</h1>
+          <div class="sub">Agent 不是工具，它有自己的偏好。</div>
+          <div class="hairline"></div>
+        </div>
+
+        <div class="deck-slide" id="slideB" style="opacity:0; transform: translateX(60px);">
+          <div class="eyebrow">AI 心理学 · 第 4 节</div>
+          <h1>注入与引导</h1>
+          <div class="sub">参数里藏着一个世界。</div>
+          <div class="hairline"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="key-hint" id="keyHint">
+      <span>键盘翻页</span>
+      <span class="kbd" id="kbdKey">→</span>
+    </div>
+  </div>
+
+  <!-- ====== Beat 2: Split Screen ====== -->
+  <div class="beat2" id="beat2">
+    <!-- LEFT: HTML deck -->
+    <div class="split-col" style="position: relative;">
+      <div class="split-label" id="labelLeft">HTML · <span class="em">只读演示</span></div>
+      <div class="split-window split-left" id="splitLeft">
+      <div class="mini-chrome">
+        <span class="d"></span><span class="d"></span><span class="d"></span>
+        <span class="label">localhost:8080/deck</span>
+      </div>
+      <div class="mini-slide">
+        <div class="mini-eye">AI 心理学 · 第 3 节</div>
+        <div class="mini-title">心智的<br/>可塑性</div>
+        <div class="mini-sub">Agent 不是工具，它有自己的偏好。</div>
+        <div class="mini-hair"></div>
+      </div>
+      </div>
+    </div>
+
+    <!-- Connector -->
+    <div class="connector" id="connector">
+      <svg viewBox="0 0 56 120" fill="none">
+        <line x1="4" y1="60" x2="52" y2="60" stroke="#D97757" stroke-width="1.5" stroke-dasharray="4 4"/>
+        <polygon points="44,54 54,60 44,66" fill="#D97757"/>
+      </svg>
+    </div>
+    <div class="connector-label" id="connectorLabel">html2pptx.js</div>
+
+    <!-- RIGHT: PowerPoint -->
+    <div class="split-col" style="position: relative;">
+      <div class="split-label" id="labelRight">PowerPoint · <span class="em">真文本框可改</span></div>
+      <div class="split-window split-right" id="splitRight">
+      <div class="ppt-titlebar">
+        <div class="pp-logo">P</div>
+        <div class="title-text">AI-心理学-演讲.pptx - PowerPoint</div>
+        <div class="win-dots"><span></span><span></span><span></span></div>
+      </div>
+      <div class="ppt-toolbar">
+        <div class="tool">
+          <span class="ico"></span>
+          <span class="font-name"><span id="fontName">Noto Serif SC</span><span style="opacity:0.5">▾</span></span>
+        </div>
+        <div class="divider"></div>
+        <div class="tool"><span style="font-weight:700">B</span></div>
+        <div class="tool" style="font-style:italic">I</div>
+        <div class="tool" style="text-decoration:underline">U</div>
+        <div class="divider"></div>
+        <div class="tool active"><span class="ico" style="background:#D97757;border-color:#D97757"></span></div>
+      </div>
+
+      <div class="ppt-canvas">
+        <div class="ppt-slide">
+          <div class="ppt-eye">AI 心理学 · 第 3 节</div>
+          <div class="ppt-title-frame" id="titleFrame">
+            <span class="handle tl"></span>
+            <span class="handle tr"></span>
+            <span class="handle bl"></span>
+            <span class="handle br"></span>
+            <span class="ppt-title" id="titleText">心智的可塑性</span><span class="edit-caret" id="caret"></span>
+          </div>
+          <div class="ppt-sub">Agent 不是工具，它有自己的偏好。</div>
+          <div class="ppt-hair"></div>
+        </div>
+
+        <!-- Cursor arrow -->
+        <div class="cursor" id="cursor">
+          <svg viewBox="0 0 22 30" fill="none">
+            <path d="M2 2 L2 22 L8 17 L12 26 L16 24 L12 15 L20 14 Z"
+                  fill="#1A1918" stroke="#fff" stroke-width="1.2" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <!-- Double-click ripple -->
+        <div class="dblclick-ripple" id="ripple"></div>
+      </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== Brand Reveal (米色面板 · hero-v10 signature) ====== -->
+  <div class="brand-panel" id="brandPanel"></div>
+  <div class="brand-reveal" id="brandReveal">
+    <div class="brand-wordmark" id="wordmark">huashu<span class="accent">-</span>design</div>
+    <div class="brand-line" id="brandLine"></div>
+  </div>
+
+</div>
+
+<script>
 (function() {
-  const { createContext, useContext, useState, useEffect, useRef, useCallback } = React;
-  const TimeContext = createContext({ time: 0, duration: 10, playing: false });
-  const SpriteContext = createContext(null);
+  // ---------- Fit stage ----------
+  const stage = document.getElementById('stage');
+  function rescale() {
+    const s = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+    stage.style.transform = `translate(-50%, -50%) scale(${s})`;
+  }
+  rescale();
+  window.addEventListener('resize', rescale);
 
-  const Easing = {
-    linear: t => t,
-    easeIn: t => t * t,
-    easeOut: t => 1 - (1 - t) * (1 - t),
-    easeInOut: t => t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2,
-    spring: t => {
-      const c = (2 * Math.PI) / 3;
-      return t === 0 ? 0 : t === 1 ? 1 : Math.pow(2, -10 * t) * Math.sin((t * 10 - 0.75) * c) + 1;
-    },
+  // ---------- Easings ----------
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const expoOut = t => (t <= 0) ? 0 : (t >= 1) ? 1 : 1 - Math.pow(2, -10 * t);
+  const expoIn = t => (t <= 0) ? 0 : (t >= 1) ? 1 : Math.pow(2, 10 * (t - 1));
+  const easeOut = t => 1 - Math.pow(1 - t, 3);
+  const easeInOut = t => t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2;
+  function lerp(time, start, end, fromV, toV, ease) {
+    if (time <= start) return fromV;
+    if (time >= end) return toV;
+    let p = (time - start) / (end - start);
+    if (ease) p = ease(p);
+    return fromV + (toV - fromV) * p;
+  }
+  function clampLerp(time, start, end) {
+    if (time <= start) return 0;
+    if (time >= end) return 1;
+    return (time - start) / (end - start);
+  }
+
+  // ---------- Timeline (10s total) ----------
+  const T = {
+    DURATION: 10.0,
+
+    // Beat 1: 0 - 2s
+    deckIn:       [0.15, 0.9],       // browser fade+rise
+    keyHintIn:    [0.6, 1.1],
+    keyPress:     [1.25, 1.4],       // arrow key highlight
+    slideFlip:    [1.3, 1.9],        // slide A→B
+    beat1Out:     [2.0, 2.4],
+
+    // Beat 2: split screen: 2.2 - 8.0s
+    beat2In:      [2.3, 2.9],
+    labelsIn:     [3.0, 3.5],
+
+    cursorIn:     [3.1, 3.4],        // cursor arrives on right side
+    cursorMove1:  [3.4, 4.1],        // cursor moves to title
+    dblclick:     [4.1, 4.3],        // double click
+    frameSelect:  [4.15, 4.35],      // frame shows handles
+    frameEdit:    [4.4, 4.55],       // frame enters edit mode
+    caretShowStart: 4.5,
+    textDelete:   [4.6, 5.4],        // delete original text char by char
+    textRetype:   [5.5, 7.2],        // type new text char by char
+    commitEdit:   [7.3, 7.5],        // exit edit mode
+
+    connectorIn:  [3.3, 3.9],
+    beat2Out:     [8.0, 8.3],        // main scene fades to 0 (0.3s)
+
+    // Brand Reveal (米色面板 · hero-v10 signature): 8.3 - 10s
+    // panelRise 与 beat2Out 微重叠 0.05s，避免黑屏间隙
+    panelRise:    [8.25, 8.7],       // 米色面板 translateY 100%→0 (expoOut)
+    wordmarkIn:   [8.7, 9.3],        // wordmark opacity 0→1 + translateY 20→0 + weight 100→500 (0.6s, expoOut)
+    brandLineIn:  [9.3, 9.7],        // brand-line expand 0→280px (0.4s, cubicOut)
+    brandHold:    [9.7, 10.0],       // hold (0.3s)
   };
 
-  function interpolate(t, input, output, easing) {
-    const [inStart, inEnd] = input;
-    const [outStart, outEnd] = output;
-    if (t <= inStart) return outStart;
-    if (t >= inEnd) return outEnd;
-    let progress = (t - inStart) / (inEnd - inStart);
-    if (easing) progress = easing(progress);
-    return outStart + (outEnd - outStart) * progress;
-  }
+  // ---------- Elements ----------
+  const beat1 = document.getElementById('beat1');
+  const beat2 = document.getElementById('beat2');
+  const brandReveal = document.getElementById('brandReveal');
+  const deckWindow = document.getElementById('deckWindow');
+  const pageCount = document.getElementById('pageCount');
+  const slideA = document.getElementById('slideA');
+  const slideB = document.getElementById('slideB');
+  const keyHint = document.getElementById('keyHint');
+  const kbdKey = document.getElementById('kbdKey');
+  const splitLeft = document.getElementById('splitLeft');
+  const splitRight = document.getElementById('splitRight');
+  const labelLeft = document.getElementById('labelLeft');
+  const labelRight = document.getElementById('labelRight');
+  const connector = document.getElementById('connector');
+  const connectorLabel = document.getElementById('connectorLabel');
+  const cursor = document.getElementById('cursor');
+  const ripple = document.getElementById('ripple');
+  const titleFrame = document.getElementById('titleFrame');
+  const titleText = document.getElementById('titleText');
+  const caret = document.getElementById('caret');
+  const panel = document.getElementById('brandPanel');
+  const wordmark = document.getElementById('wordmark');
+  const brandLine = document.getElementById('brandLine');
 
-  function useTime() { return useContext(TimeContext).time; }
-  function useSprite() {
-    const sprite = useContext(SpriteContext);
-    return sprite || { t: 0, elapsed: 0, duration: 0 };
-  }
+  // Text to animate
+  const ORIG_TEXT = '心智的可塑性';
+  const NEW_TEXT  = '心智 · 可塑性';
 
-  function Stage({ duration = 10, width = 1920, height = 1080, loop = true, children, bgColor = '#fff' }) {
-    const [time, setTime] = useState(0);
-    const [playing, setPlaying] = useState(true);
-    const [scale, setScale] = useState(1);
-    const rafRef = useRef(null);
-    const effectiveLoop = (typeof window !== 'undefined' && window.__recording) ? false : loop;
+  // ---------- Render ----------
+  function render(t) {
 
-    useEffect(() => {
-      function updateScale() {
-        const vw = window.innerWidth;
-        const vh = window.innerHeight - 56;
-        const s = Math.min(vw / width, vh / height);
-        setScale(s);
+    /* ======= Beat 1 ======= */
+    let beat1Op;
+    if (t < T.beat1Out[0]) {
+      beat1Op = lerp(t, T.deckIn[0], T.deckIn[1], 0, 1, expoOut);
+    } else {
+      beat1Op = 1 - clampLerp(t, T.beat1Out[0], T.beat1Out[1]);
+    }
+    beat1.style.opacity = beat1Op;
+    beat1.style.visibility = beat1Op > 0.01 ? 'visible' : 'hidden';
+
+    // Deck window rise
+    const deckRise = lerp(t, T.deckIn[0], T.deckIn[1], 24, 0, expoOut);
+    deckWindow.style.transform = `translate3d(0, ${deckRise}px, 0)`;
+
+    // Key hint appear
+    const khOp = clampLerp(t, T.keyHintIn[0], T.keyHintIn[1]);
+    keyHint.style.opacity = khOp;
+
+    // Key press flash
+    const kpActive = t >= T.keyPress[0] && t < T.keyPress[1] + 0.2;
+    if (kpActive) {
+      const kp = clampLerp(t, T.keyPress[0], T.keyPress[1]);
+      kbdKey.style.background = `rgba(217,119,87,${0.9 * (1 - kp * 0.4)})`;
+      kbdKey.style.color = '#fff';
+      kbdKey.style.transform = `scale(${1 - 0.08 * kp})`;
+    } else {
+      kbdKey.style.background = '';
+      kbdKey.style.color = '';
+      kbdKey.style.transform = '';
+    }
+
+    // Slide flip A→B
+    if (t >= T.slideFlip[0] && t < T.slideFlip[1] + 0.2) {
+      const sp = clampLerp(t, T.slideFlip[0], T.slideFlip[1]);
+      const eased = expoOut(sp);
+      slideA.style.opacity = 1 - eased;
+      slideA.style.transform = `translateX(${-60 * eased}px)`;
+      slideB.style.opacity = eased;
+      slideB.style.transform = `translateX(${60 * (1 - eased)}px)`;
+      // Update page count at midway
+      if (sp > 0.5) pageCount.textContent = '4 / 12';
+      else pageCount.textContent = '3 / 12';
+    } else if (t >= T.slideFlip[1]) {
+      slideA.style.opacity = 0;
+      slideB.style.opacity = 1;
+      slideB.style.transform = 'translateX(0)';
+      pageCount.textContent = '4 / 12';
+    } else {
+      slideA.style.opacity = 1;
+      slideA.style.transform = 'translateX(0)';
+      slideB.style.opacity = 0;
+      pageCount.textContent = '3 / 12';
+    }
+
+    /* ======= Beat 2 ======= */
+    let beat2Op = 0;
+    if (t >= T.beat2In[0] && t < T.beat2Out[1]) {
+      if (t < T.beat2In[1]) beat2Op = clampLerp(t, T.beat2In[0], T.beat2In[1]);
+      else if (t < T.beat2Out[0]) beat2Op = 1;
+      else beat2Op = 1 - clampLerp(t, T.beat2Out[0], T.beat2Out[1]);
+    }
+    beat2.style.opacity = beat2Op;
+    beat2.style.visibility = beat2Op > 0.01 ? 'visible' : 'hidden';
+
+    // Windows rise in
+    const splitInP = clampLerp(t, T.beat2In[0], T.beat2In[1]);
+    const splitRise = lerp(t, T.beat2In[0], T.beat2In[1], 28, 0, expoOut);
+    splitLeft.style.transform = `translate3d(${-8 * (1 - expoOut(splitInP))}px, ${splitRise}px, 0)`;
+    splitRight.style.transform = `translate3d(${8 * (1 - expoOut(splitInP))}px, ${splitRise}px, 0)`;
+
+    // Labels
+    const labelOp = clampLerp(t, T.labelsIn[0], T.labelsIn[1]);
+    labelLeft.style.opacity = labelOp * 0.7;
+    labelRight.style.opacity = labelOp * 0.85;
+
+    // Connector
+    const connOp = clampLerp(t, T.connectorIn[0], T.connectorIn[1]);
+    connector.style.opacity = connOp;
+    connectorLabel.style.opacity = connOp * 0.9;
+
+    /* === Cursor movement === */
+    // Cursor positions (relative to .ppt-canvas, which is inside split-right)
+    // Canvas starts at (0,0), size ~820 × 508 (580 - 32 - 40)
+    // Title sits around x=84 y=110 (inside .ppt-slide padding 56/64)
+    // We'll place cursor with absolute positioning inside .ppt-canvas.
+
+    // Entry point: off to the right bottom of canvas
+    const P_ENTER = { x: 720, y: 420 };
+    const P_TITLE = { x: 250, y: 170 }; // on the title
+
+    let cursorOp = 0;
+    let cx = P_ENTER.x, cy = P_ENTER.y;
+
+    if (t >= T.cursorIn[0] && t < T.beat2Out[0]) {
+      cursorOp = 1;
+      // Phase 1: appear (pop in with slight scale)
+      const inP = clampLerp(t, T.cursorIn[0], T.cursorIn[1]);
+      cursorOp = expoOut(inP);
+
+      // Phase 2: move to title
+      if (t >= T.cursorMove1[0]) {
+        const mp = clampLerp(t, T.cursorMove1[0], T.cursorMove1[1]);
+        const e = easeInOut(mp);
+        cx = P_ENTER.x + (P_TITLE.x - P_ENTER.x) * e;
+        cy = P_ENTER.y + (P_TITLE.y - P_ENTER.y) * e;
+      } else {
+        cx = P_ENTER.x;
+        cy = P_ENTER.y;
       }
-      updateScale();
-      window.addEventListener('resize', updateScale);
-      return () => window.removeEventListener('resize', updateScale);
-    }, [width, height]);
 
-    useEffect(() => {
-      if (!playing) return;
-      let cancelled = false;
-      let last = null;
-      function tick(now) {
-        if (cancelled) return;
-        if (last === null) {
-          last = now;
-          if (typeof window !== 'undefined') window.__ready = true;
-        }
-        const delta = (now - last) / 1000;
-        last = now;
-        setTime(prev => {
-          const next = prev + delta;
-          if (next >= duration) return effectiveLoop ? 0 : duration - 0.001;
-          return next;
-        });
-        rafRef.current = requestAnimationFrame(tick);
+      // After double-click, slight jitter toward caret position during typing
+      if (t >= T.textRetype[0] && t < T.textRetype[1]) {
+        cx = P_TITLE.x + 6;
+        cy = P_TITLE.y - 2;
       }
-      const start = () => { if (!cancelled) rafRef.current = requestAnimationFrame(tick); };
-      if (document.fonts && document.fonts.ready) document.fonts.ready.then(start); else start();
-      return () => { cancelled = true; cancelAnimationFrame(rafRef.current); };
-    }, [playing, duration, effectiveLoop]);
+    } else if (t >= T.beat2Out[0]) {
+      cursorOp = 1 - clampLerp(t, T.beat2Out[0], T.beat2Out[1]);
+    }
+    cursor.style.opacity = cursorOp;
+    cursor.style.transform = `translate(${cx}px, ${cy}px)`;
 
-    const progress = time / duration;
-    const ctx = { time, duration, playing, setPlaying, setTime };
+    /* === Double-click ripple === */
+    // Ripple pulses twice at T.dblclick start
+    let rippleVisible = false;
+    if (t >= T.dblclick[0] && t < T.dblclick[0] + 0.7) {
+      const dt = t - T.dblclick[0];
+      // Two rapid pulses
+      const pulse1 = clamp(dt / 0.25, 0, 1);
+      const pulse2 = clamp((dt - 0.15) / 0.25, 0, 1);
+      const scale1 = 0.4 + pulse1 * 1.4;
+      const scale2 = 0.4 + pulse2 * 1.4;
+      const op1 = 1 - pulse1;
+      const op2 = dt > 0.15 ? (1 - pulse2) : 0;
+      // Render as single element: use larger of the two
+      const scale = Math.max(scale1, scale2);
+      const op = Math.max(op1, op2);
+      ripple.style.opacity = op;
+      ripple.style.transform = `translate(-50%, -50%) translate(${P_TITLE.x + 6}px, ${P_TITLE.y + 26}px) scale(${scale})`;
+      rippleVisible = true;
+    }
+    if (!rippleVisible) ripple.style.opacity = 0;
 
-    const canvasStyle = {
-      position: 'absolute',
-      top: '50%',
-      left: '50%',
-      transformOrigin: 'center center',
-      width,
-      height,
-      background: bgColor,
-      overflow: 'hidden',
-      transform: `translate(-50%, -50%) scale(${scale})`,
-    };
+    /* === Frame states: selected → editing === */
+    titleFrame.classList.remove('selected', 'editing');
+    if (t >= T.frameSelect[0] && t < T.frameEdit[0]) {
+      titleFrame.classList.add('selected');
+    } else if (t >= T.frameEdit[0] && t < T.commitEdit[1]) {
+      titleFrame.classList.add('editing');
+    }
 
-    return (
-      <TimeContext.Provider value={ctx}>
-        <div style={{position:'fixed', inset:0, background:'#0c0c0c', display:'flex', flexDirection:'column'}}>
-          <div style={{flex:1, position:'relative', overflow:'hidden'}}>
-            <div style={canvasStyle}>{children}</div>
-          </div>
-          <div className="no-record" style={{position:'fixed', bottom:0, left:0, right:0, background:'rgba(0,0,0,0.8)', backdropFilter:'blur(10px)', padding:'12px 20px', display:'flex', alignItems:'center', gap:16, color:'#fff', fontSize:12, zIndex:100}}>
-            <button onClick={()=>setPlaying(p=>!p)} style={{background:'none', border:'1px solid rgba(255,255,255,0.3)', color:'#fff', padding:'6px 14px', borderRadius:4, cursor:'pointer', fontSize:12}}>{playing?'⏸ 暂停':'▶ 播放'}</button>
-            <button onClick={()=>setTime(0)} style={{background:'none', border:'1px solid rgba(255,255,255,0.3)', color:'#fff', padding:'6px 14px', borderRadius:4, cursor:'pointer', fontSize:12}}>⏮ 开始</button>
-            <div style={{fontFamily:'ui-monospace, monospace', fontVariantNumeric:'tabular-nums', minWidth:90}}>{time.toFixed(2)}s / {duration.toFixed(2)}s</div>
-            <div style={{flex:1, height:4, background:'rgba(255,255,255,0.2)', borderRadius:2, position:'relative'}}>
-              <div style={{position:'absolute', top:0, left:0, height:'100%', width:`${progress*100}%`, background:'#fff', borderRadius:2}} />
-            </div>
-          </div>
-        </div>
-      </TimeContext.Provider>
-    );
+    /* === Text animation: delete → retype === */
+    let displayedText = ORIG_TEXT;
+    let caretOp = 0;
+
+    if (t < T.textDelete[0]) {
+      displayedText = ORIG_TEXT;
+      caretOp = t >= T.caretShowStart ? 1 : 0;
+    } else if (t < T.textDelete[1]) {
+      // Delete: remove chars from end
+      const dp = clampLerp(t, T.textDelete[0], T.textDelete[1]);
+      const charsToRemove = Math.floor(dp * ORIG_TEXT.length);
+      displayedText = ORIG_TEXT.slice(0, ORIG_TEXT.length - charsToRemove);
+      caretOp = 1;
+    } else if (t < T.textRetype[0]) {
+      displayedText = '';
+      caretOp = 1;
+    } else if (t < T.textRetype[1]) {
+      // Retype new text
+      const rp = clampLerp(t, T.textRetype[0], T.textRetype[1]);
+      const charsToShow = Math.floor(rp * NEW_TEXT.length);
+      displayedText = NEW_TEXT.slice(0, charsToShow);
+      caretOp = 1;
+    } else if (t < T.commitEdit[1]) {
+      displayedText = NEW_TEXT;
+      // Caret blinks while still in edit mode
+      caretOp = (Math.floor(t * 2) % 2 === 0) ? 1 : 0.3;
+    } else {
+      displayedText = NEW_TEXT;
+      caretOp = 0;
+    }
+
+    // Blinking during idle-in-edit phases (when not actively typing/deleting)
+    if (t >= T.caretShowStart && t < T.textDelete[0]) {
+      caretOp = (Math.floor((t - T.caretShowStart) * 3) % 2 === 0) ? 1 : 0.35;
+    }
+
+    titleText.textContent = displayedText;
+    caret.style.opacity = caretOp;
+
+    /* ======= Brand Reveal (米色面板 · hero-v10 signature) ======= */
+    // Panel rises from bottom (米色面板 #F5F4F0)
+    const panelP = clampLerp(t, T.panelRise[0], T.panelRise[1]);
+    panel.style.transform = `translateY(${(1 - expoOut(panelP)) * 100}%)`;
+
+    // brand-reveal container visible once panel starts rising
+    brandReveal.style.opacity = panelP > 0.01 ? 1 : 0;
+
+    // Wordmark: opacity 0→1 + translateY 20→0 + weight 100→500 (expoOut)
+    const wmP = clampLerp(t, T.wordmarkIn[0], T.wordmarkIn[1]);
+    const wmEased = expoOut(wmP);
+    wordmark.style.opacity = wmEased;
+    const wmRise = (1 - wmEased) * 20;
+    wordmark.style.transform = `translate3d(0, ${wmRise}px, 0)`;
+    const w = 100 + (500 - 100) * wmEased;
+    wordmark.style.fontVariationSettings = `"wght" ${w.toFixed(0)}`;
+    wordmark.style.fontWeight = Math.round(w);
+
+    // Brand line expand 0→280px (cubicOut)
+    const lineP = clampLerp(t, T.brandLineIn[0], T.brandLineIn[1]);
+    const cubicOut = x => 1 - Math.pow(1 - x, 3);
+    brandLine.style.width = (280 * cubicOut(lineP)) + 'px';
   }
 
-  function Sprite({ start = 0, end, children, style }) {
-    const { time } = useContext(TimeContext);
-    const actualEnd = end == null ? Infinity : end;
-    if (time < start || time >= actualEnd) return null;
-    const duration = actualEnd - start;
-    const elapsed = time - start;
-    const t = duration === 0 ? 1 : Math.max(0, Math.min(1, elapsed / duration));
-    const spriteValue = { t, elapsed, duration, start, end: actualEnd };
-    return (
-      <SpriteContext.Provider value={spriteValue}>
-        <div style={{position:'absolute', inset:0, ...style}}>{children}</div>
-      </SpriteContext.Provider>
-    );
+  // ---------- Driver ----------
+  let manualT = null;
+  let startMs = null;
+  let hasFinished = false;
+  function tick(now) {
+    if (manualT != null) render(manualT);
+    else {
+      if (startMs == null) startMs = now;
+      const elapsed = (now - startMs) / 1000;
+      const recording = window.__recording === true;
+      let t;
+      if (recording) {
+        t = Math.min(elapsed, T.DURATION - 0.001);
+        if (elapsed >= T.DURATION) hasFinished = true;
+      } else {
+        t = elapsed % T.DURATION;
+      }
+      render(t);
+    }
+    requestAnimationFrame(tick);
   }
+  // Force first-frame render synchronously, THEN set ready
+  render(0);
+  requestAnimationFrame(tick);
 
-  window.Animations = { Stage, Sprite, useTime, useSprite, Easing, interpolate };
+  window.__setTime = function(t) { manualT = t; render(t); };
+  window.__resume = function() { manualT = null; startMs = null; };
+  window.__duration = T.DURATION;
+  window.__render = render;
+  window.__ready = true;
 })();
-</script>
-
-<!-- Demo scene -->
-<script type="text/babel">
-const { Stage, Sprite, useTime, useSprite, Easing, interpolate } = window.Animations;
-
-// ── Design tokens ─────────────────────────────────────────
-const CREAM = '#FAF6EF';
-const INK = '#1a1a1a';
-const TERRA = '#C04A1A';
-const ASH = '#6b6b6b';
-const LINE = '#d9d2c5';
-const OLIVE = '#6a6b4e';
-const DEEP_BLUE = '#2a3552';
-
-const serif = "'Newsreader', 'Noto Serif SC', Georgia, serif";
-const sans = "'Inter', -apple-system, sans-serif";
-const mono = "'JetBrains Mono', ui-monospace, monospace";
-
-// ══════════════════════════════════════════════════════════
-// Scene 1 (0 – 3s) · 开题
-// ══════════════════════════════════════════════════════════
-function Scene1_Title() {
-  const { elapsed } = useSprite();
-  const tagOp = interpolate(elapsed, [0, 0.6], [0, 1]);
-  const mainOp = interpolate(elapsed, [0.4, 1.2], [0, 1]);
-  const mainY = interpolate(elapsed, [0.4, 1.2], [40, 0], Easing.easeOut);
-  const terraOp = interpolate(elapsed, [1.1, 1.8], [0, 1]);
-  const lineW = interpolate(elapsed, [1.6, 2.2], [0, 640]);
-  const subOp = interpolate(elapsed, [1.9, 2.5], [0, 1]);
-  const fadeOut = interpolate(elapsed, [2.7, 3.0], [1, 0]);
-
-  return (
-    <div style={{position:'absolute', inset:0, background:CREAM, opacity: fadeOut,
-      display:'flex', alignItems:'center', justifyContent:'center', flexDirection:'column'}}>
-      <div style={{position:'absolute', top: 72, left: 88,
-        fontFamily: mono, fontSize: 12, letterSpacing:'0.3em',
-        color: ASH, opacity: tagOp}}>
-        <span style={{color: TERRA}}>●</span>  幻灯片能力 · HTML + PPTX
-      </div>
-      <div style={{fontFamily: serif, fontSize: 130, fontWeight: 500,
-        color: INK, lineHeight: 1.0, letterSpacing:'-0.015em',
-        opacity: mainOp, transform: `translateY(${mainY}px)`,
-        textAlign: 'center'}}>
-        <span style={{fontStyle:'italic'}}>播放</span>用 HTML，<br/>
-        <span style={{fontStyle:'italic', color: TERRA, opacity: terraOp}}>编辑</span>用 PPTX
-      </div>
-      <div style={{height: 1, background: INK, width: lineW, marginTop: 40}} />
-      <div style={{fontFamily: serif, fontStyle:'italic', fontSize: 24,
-        color: ASH, marginTop: 24, opacity: subOp, letterSpacing:'0.02em'}}>
-        一个源文件，两种交付形态
-      </div>
-    </div>
-  );
-}
-
-// ══════════════════════════════════════════════════════════
-// Scene 2 (3 – 9s) · HTML Deck 翻页
-// ══════════════════════════════════════════════════════════
-function Scene2_DeckFlip() {
-  const { elapsed } = useSprite();
-  const frameOp = interpolate(elapsed, [0, 0.6], [0, 1]);
-  const frameScale = interpolate(elapsed, [0, 0.8], [0.94, 1], Easing.easeOut);
-
-  // Three pages, each ~1.5s. Stagger timings inside deck.
-  // Page 1: 0.6 – 2.2 | Page 2: 2.2 – 3.8 | Page 3: 3.8 – 5.6
-  const pageIndex = elapsed < 2.2 ? 0 : elapsed < 3.8 ? 1 : 2;
-  const pageNum = pageIndex + 1;
-
-  const fadeOut = interpolate(elapsed, [5.6, 6.0], [1, 0]);
-
-  return (
-    <div style={{position:'absolute', inset:0, background: CREAM, opacity: fadeOut,
-      display:'flex', alignItems:'center', justifyContent:'center', flexDirection:'column'}}>
-      <div style={{position:'absolute', top: 48, left: 88,
-        fontFamily: mono, fontSize: 11, letterSpacing:'0.3em', color: ASH}}>
-        <span style={{color: TERRA}}>●</span>  SCENE 02 · HTML DECK
-      </div>
-      <div style={{position:'absolute', top: 48, right: 88,
-        fontFamily: serif, fontStyle:'italic', fontSize: 20, color: ASH}}>
-        浏览器里直接演讲
-      </div>
-
-      <div style={{opacity: frameOp, transform: `scale(${frameScale})`,
-        transformOrigin:'center center'}}>
-        <BrowserFrame url="file:///Users/huashu/decks/annual-2026/deck.html">
-          <DeckSlide pageIndex={pageIndex} localElapsed={elapsed} />
-          {/* Footer inside deck */}
-          <div style={{position:'absolute', bottom: 18, left: 28, right: 28,
-            display:'flex', justifyContent:'space-between', alignItems:'center',
-            zIndex: 5}}>
-            <div style={{fontFamily: mono, fontSize: 11, color: ASH,
-              letterSpacing:'0.15em'}}>
-              {String(pageNum).padStart(2,'0')} / 12
-            </div>
-            <div style={{fontFamily: mono, fontSize: 10, color: ASH,
-              letterSpacing:'0.2em'}}>
-              HUASHU · DESIGN
-            </div>
-          </div>
-          {/* TERRA progress bar */}
-          <div style={{position:'absolute', bottom: 0, left: 0, right: 0,
-            height: 3, background: '#eee', zIndex: 5}}>
-            <div style={{height:'100%', width: `${(pageNum/12)*100}%`,
-              background: TERRA}} />
-          </div>
-        </BrowserFrame>
-      </div>
-
-      <div style={{marginTop: 28, fontFamily: mono, fontSize: 11, color: ASH,
-        letterSpacing:'0.25em'}}>
-        <span style={{color: pageIndex === 0 ? TERRA : LINE}}>●</span>
-        <span style={{margin:'0 10px', color: pageIndex === 1 ? TERRA : LINE}}>●</span>
-        <span style={{color: pageIndex === 2 ? TERRA : LINE}}>●</span>
-      </div>
-    </div>
-  );
-}
-
-// Browser chrome container (chrome style, 1600×900 deck 16:9)
-function BrowserFrame({ url, children }) {
-  const W = 1400, H = 788;  // 16:9 ratio
-  return (
-    <div style={{
-      display:'inline-block',
-      background:'#e8e4dc',
-      borderRadius: 12,
-      boxShadow:'0 30px 70px rgba(0,0,0,0.18), 0 10px 24px rgba(0,0,0,0.12)',
-      padding: 0,
-      overflow:'hidden',
-      border:`1px solid ${LINE}`,
-    }}>
-      {/* Title bar */}
-      <div style={{height: 42, display:'flex', alignItems:'center',
-        background:'#e8e4dc', padding:'0 16px', gap: 8,
-        borderBottom:`1px solid ${LINE}`}}>
-        <div style={{width:12, height:12, borderRadius:'50%', background:'#ff5f57'}} />
-        <div style={{width:12, height:12, borderRadius:'50%', background:'#febc2e'}} />
-        <div style={{width:12, height:12, borderRadius:'50%', background:'#28c840'}} />
-        <div style={{flex: 1, height: 26, background:'#faf6ef', border:`1px solid ${LINE}`,
-          borderRadius: 6, marginLeft: 16, padding:'0 14px',
-          display:'flex', alignItems:'center', gap: 8,
-          fontFamily: mono, fontSize: 11, color: ASH, letterSpacing:'0.02em',
-          overflow:'hidden', whiteSpace:'nowrap'}}>
-          <svg width="10" height="12" viewBox="0 0 10 12" style={{flexShrink: 0}}>
-            <path d="M2 5 V3.5 a3 3 0 016 0 V5" stroke={OLIVE} strokeWidth="1.2" fill="none"/>
-            <rect x="1" y="5" width="8" height="6" fill={OLIVE} opacity="0.85"/>
-          </svg>
-          <span style={{color: INK, opacity: 0.7}}>{url}</span>
-        </div>
-        <div style={{fontFamily: mono, fontSize: 10, color: ASH,
-          letterSpacing:'0.15em'}}>DECK MODE</div>
-      </div>
-      {/* Deck area */}
-      <div style={{width: W, height: H, background:'#fff', position:'relative',
-        overflow:'hidden'}}>
-        {children}
-      </div>
-    </div>
-  );
-}
-
-// Three deck pages
-function DeckSlide({ pageIndex, localElapsed }) {
-  // Slide-in entrance each time pageIndex changes
-  const pageStart = pageIndex === 0 ? 0.6 : pageIndex === 1 ? 2.2 : 3.8;
-  const sinceStart = localElapsed - pageStart;
-  const slideX = interpolate(sinceStart, [0, 0.5], [140, 0], Easing.easeOut);
-  const fadeIn = interpolate(sinceStart, [0, 0.4], [0, 1]);
-
-  return (
-    <div key={pageIndex} style={{position:'absolute', inset:0,
-      opacity: fadeIn, transform: `translateX(${slideX}px)`}}>
-      {pageIndex === 0 && <CoverPage />}
-      {pageIndex === 1 && <DataPage />}
-      {pageIndex === 2 && <QuotePage />}
-    </div>
-  );
-}
-
-function CoverPage() {
-  return (
-    <div style={{padding: '80px 80px 60px', height:'100%', background:'#fff',
-      display:'flex', flexDirection:'column'}}>
-      <div style={{fontFamily: mono, fontSize: 12, letterSpacing:'0.3em',
-        color: TERRA, marginBottom: 14}}>
-        VOL.01 · ANNUAL REPORT
-      </div>
-      <div style={{flex: 1, display:'flex', flexDirection:'column',
-        justifyContent:'center'}}>
-        <div style={{fontFamily: serif, fontSize: 132, fontWeight: 500,
-          color: INK, lineHeight: 1.02, letterSpacing:'-0.02em'}}>
-          2026<br/>
-          <span style={{fontStyle:'italic'}}>设计年度</span>报告
-        </div>
-        <div style={{height: 1, background: INK, width: 380, marginTop: 36,
-          marginBottom: 28}} />
-        <div style={{fontFamily: serif, fontStyle:'italic', fontSize: 22,
-          color: ASH, letterSpacing:'0.02em'}}>
-          The shape of digital craft, from typography to motion.
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function DataPage() {
-  const numbers = [
-    { big: '428', label: '项目交付', unit: 'projects' },
-    { big: '92%', label: '客户续约', unit: 'retention' },
-    { big: '3.1x', label: '交付提速', unit: 'vs 2025' },
-  ];
-  const bars = [
-    { h: 0.45, label: 'Q1' },
-    { h: 0.62, label: 'Q2' },
-    { h: 0.78, label: 'Q3' },
-    { h: 1.00, label: 'Q4', hi: true },
-  ];
-  return (
-    <div style={{padding: '60px 80px 56px', height:'100%', background:'#fff',
-      display:'flex', flexDirection:'column'}}>
-      <div style={{fontFamily: mono, fontSize: 11, letterSpacing:'0.3em',
-        color: TERRA, marginBottom: 10}}>SECTION 02 · NUMBERS</div>
-      <div style={{fontFamily: serif, fontSize: 56, fontWeight: 500, color: INK,
-        letterSpacing:'-0.015em', marginBottom: 36}}>
-        今年的三个关键数字
-      </div>
-      <div style={{display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap: 48,
-        marginBottom: 40}}>
-        {numbers.map((n, i) => (
-          <div key={i}>
-            <div style={{fontFamily: serif, fontSize: 112, fontWeight: 400,
-              color: i === 2 ? TERRA : INK, lineHeight: 1, letterSpacing:'-0.02em'}}>
-              {n.big}
-            </div>
-            <div style={{fontFamily: serif, fontStyle:'italic', fontSize: 22,
-              color: INK, marginTop: 10}}>
-              {n.label}
-            </div>
-            <div style={{fontFamily: mono, fontSize: 11, color: ASH,
-              letterSpacing:'0.2em', marginTop: 4}}>
-              {n.unit}
-            </div>
-          </div>
-        ))}
-      </div>
-      <div style={{flex: 1, display:'flex', alignItems:'flex-end', gap: 20,
-        paddingLeft: 4, borderTop:`1px solid ${LINE}`, paddingTop: 24}}>
-        {bars.map((b, i) => (
-          <div key={i} style={{flex: 1, display:'flex', flexDirection:'column',
-            alignItems:'center'}}>
-            <div style={{width:'78%', height: `${b.h * 180}px`,
-              background: b.hi ? TERRA : INK, marginBottom: 10}} />
-            <div style={{fontFamily: mono, fontSize: 11, color: ASH,
-              letterSpacing:'0.2em'}}>{b.label}</div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function QuotePage() {
-  return (
-    <div style={{padding: '80px', height:'100%', background:'#faf6ef',
-      display:'flex', flexDirection:'column', justifyContent:'center',
-      alignItems:'center', position:'relative'}}>
-      <div style={{position:'absolute', top: 64, left: 80,
-        fontFamily: mono, fontSize: 11, letterSpacing:'0.3em', color: TERRA}}>
-        EPIGRAPH · III
-      </div>
-      <div style={{fontFamily: serif, fontStyle:'italic', fontSize: 104,
-        fontWeight: 400, color: INK, lineHeight: 1.15, letterSpacing:'-0.015em',
-        textAlign:'center', maxWidth: 1100}}>
-        "Less,<br/>but <span style={{color: TERRA}}>better</span>."
-      </div>
-      <div style={{height: 1, background: INK, width: 140, marginTop: 44,
-        marginBottom: 20}} />
-      <div style={{fontFamily: serif, fontSize: 22, color: ASH,
-        letterSpacing:'0.08em'}}>
-        — Dieter Rams
-      </div>
-    </div>
-  );
-}
-
-// ══════════════════════════════════════════════════════════
-// Scene 3 (9 – 15s) · 导出流水线
-// ══════════════════════════════════════════════════════════
-function Scene3_Pipeline() {
-  const { elapsed } = useSprite();
-  const titleOp = interpolate(elapsed, [0, 0.6], [0, 1]);
-  const fadeOut = interpolate(elapsed, [5.6, 6.0], [1, 0]);
-
-  const nodes = [
-    { title: 'HTML Deck', sub: 'source of truth', icon: 'code', delay: 0.4 },
-    { title: 'html2pptx.js', sub: 'read computedStyle', icon: 'scan', delay: 1.1, hi: true },
-    { title: 'pptxgenjs', sub: 'assemble objects', icon: 'compose', delay: 1.8 },
-    { title: 'deck.pptx', sub: 'editable output', icon: 'doc', delay: 2.5 },
-  ];
-
-  const cmdOp = interpolate(elapsed, [3.8, 4.4], [0, 1]);
-
-  return (
-    <div style={{position:'absolute', inset:0, background: CREAM, opacity: fadeOut,
-      padding: '72px 96px 56px', display:'flex', flexDirection:'column'}}>
-      <div style={{display:'flex', justifyContent:'space-between',
-        alignItems:'baseline', opacity: titleOp, marginBottom: 12}}>
-        <div>
-          <div style={{fontFamily: mono, fontSize: 11, letterSpacing:'0.3em',
-            color: TERRA, marginBottom: 10}}>
-            <span>●</span>  SCENE 03 · EXPORT PIPELINE
-          </div>
-          <div style={{fontFamily: mono, fontSize: 64, fontWeight: 500,
-            color: INK, letterSpacing:'0.04em'}}>
-            导出流水线
-          </div>
-        </div>
-        <div style={{fontFamily: serif, fontStyle:'italic', fontSize: 20,
-          color: ASH, textAlign:'right', maxWidth: 380, lineHeight: 1.5}}>
-          把 DOM 翻译成<br/>
-          PowerPoint 对象图
-        </div>
-      </div>
-
-      <div style={{height: 1, background: INK, width: '100%', opacity: titleOp,
-        marginTop: 28, marginBottom: 48}} />
-
-      {/* Pipeline nodes */}
-      <div style={{display:'flex', alignItems:'stretch', gap: 0, flex: 1,
-        position:'relative'}}>
-        {nodes.map((n, i) => {
-          const op = interpolate(elapsed, [n.delay, n.delay + 0.5], [0, 1]);
-          const ty = interpolate(elapsed, [n.delay, n.delay + 0.5], [28, 0], Easing.easeOut);
-          return (
-            <React.Fragment key={i}>
-              <div style={{flex: 1, opacity: op, transform: `translateY(${ty}px)`,
-                background: n.hi ? TERRA : '#fff',
-                border: `1px solid ${n.hi ? TERRA : LINE}`,
-                padding:'28px 24px', display:'flex', flexDirection:'column',
-                color: n.hi ? '#fff' : INK}}>
-                <div style={{fontFamily: mono, fontSize: 10, letterSpacing:'0.25em',
-                  opacity: n.hi ? 0.85 : 0.5, marginBottom: 18}}>
-                  STEP {String(i+1).padStart(2, '0')}
-                </div>
-                <NodeIcon kind={n.icon} hi={n.hi} />
-                <div style={{fontFamily: mono, fontSize: 20, fontWeight: 500,
-                  marginTop: 20, letterSpacing:'0.01em'}}>
-                  {n.title}
-                </div>
-                <div style={{fontFamily: serif, fontStyle:'italic', fontSize: 15,
-                  opacity: n.hi ? 0.85 : 0.6, marginTop: 6}}>
-                  {n.sub}
-                </div>
-              </div>
-              {i < nodes.length - 1 && (
-                <ArrowBetween elapsed={elapsed} startTime={n.delay + 0.4} />
-              )}
-            </React.Fragment>
-          );
-        })}
-      </div>
-
-      {/* Data flow caption */}
-      <div style={{marginTop: 36, display:'flex', alignItems:'center', gap: 24,
-        opacity: interpolate(elapsed, [3.2, 3.8], [0, 1])}}>
-        <div style={{fontFamily: mono, fontSize: 13, color: ASH,
-          letterSpacing:'0.05em', flex: 1}}>
-          <span style={{color: OLIVE}}>DOM node</span> <span style={{color: TERRA}}>→</span>{' '}
-          <span style={{color: INK}}>{'{ type, text, font, color, x, y }'}</span>
-          <span style={{color: ASH, margin:'0 14px'}}>·</span>
-          <span style={{color: TERRA}}>→</span> <span style={{color: INK}}>slide.addText(...) / slide.addShape(...)</span>
-        </div>
-      </div>
-
-      {/* Command subtitle */}
-      <div style={{marginTop: 22, opacity: cmdOp,
-        background:'#1a1a1a', padding:'16px 24px',
-        borderLeft: `3px solid ${TERRA}`,
-        display:'flex', alignItems:'center', gap: 16}}>
-        <div style={{fontFamily: mono, fontSize: 12, color: TERRA,
-          letterSpacing:'0.2em'}}>$</div>
-        <div style={{fontFamily: mono, fontSize: 15, color: '#f5f0e6',
-          letterSpacing:'0.02em'}}>
-          node export_deck_pptx.mjs deck.html <span style={{color: '#8ca577'}}>--mode editable</span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function NodeIcon({ kind, hi }) {
-  const fg = hi ? '#fff' : INK;
-  const bg = hi ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.04)';
-  if (kind === 'code') {
-    return (
-      <div style={{width: 72, height: 72, background: bg,
-        display:'flex', alignItems:'center', justifyContent:'center'}}>
-        <svg width="34" height="34" viewBox="0 0 34 34" fill="none">
-          <path d="M12 10 L5 17 L12 24" stroke={fg} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          <path d="M22 10 L29 17 L22 24" stroke={fg} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          <path d="M19 7 L15 27" stroke={fg} strokeWidth="2" strokeLinecap="round"/>
-        </svg>
-      </div>
-    );
-  }
-  if (kind === 'scan') {
-    return (
-      <div style={{width: 72, height: 72, background: bg,
-        display:'flex', alignItems:'center', justifyContent:'center'}}>
-        <svg width="38" height="38" viewBox="0 0 38 38" fill="none">
-          <rect x="6" y="6" width="26" height="26" stroke={fg} strokeWidth="2"/>
-          <line x1="6" y1="15" x2="32" y2="15" stroke={fg} strokeWidth="1.5"/>
-          <line x1="6" y1="23" x2="32" y2="23" stroke={fg} strokeWidth="1.5"/>
-          <line x1="15" y1="6" x2="15" y2="32" stroke={fg} strokeWidth="1.5"/>
-          <line x1="23" y1="6" x2="23" y2="32" stroke={fg} strokeWidth="1.5"/>
-          <circle cx="19" cy="19" r="3" fill={fg}/>
-        </svg>
-      </div>
-    );
-  }
-  if (kind === 'compose') {
-    return (
-      <div style={{width: 72, height: 72, background: bg,
-        display:'flex', alignItems:'center', justifyContent:'center'}}>
-        <svg width="38" height="38" viewBox="0 0 38 38" fill="none">
-          <rect x="4" y="4" width="16" height="12" stroke={fg} strokeWidth="2"/>
-          <rect x="22" y="4" width="12" height="12" stroke={fg} strokeWidth="2"/>
-          <rect x="4" y="20" width="12" height="14" stroke={fg} strokeWidth="2"/>
-          <rect x="18" y="20" width="16" height="14" stroke={fg} strokeWidth="2"/>
-        </svg>
-      </div>
-    );
-  }
-  // doc
-  return (
-    <div style={{width: 72, height: 72, background: bg,
-      display:'flex', alignItems:'center', justifyContent:'center'}}>
-      <svg width="34" height="38" viewBox="0 0 34 38" fill="none">
-        <path d="M6 4 H22 L28 10 V34 H6 Z" stroke={fg} strokeWidth="2" strokeLinejoin="round"/>
-        <path d="M22 4 V10 H28" stroke={fg} strokeWidth="2" strokeLinejoin="round"/>
-        <line x1="11" y1="17" x2="23" y2="17" stroke={fg} strokeWidth="1.5"/>
-        <line x1="11" y1="22" x2="23" y2="22" stroke={fg} strokeWidth="1.5"/>
-        <line x1="11" y1="27" x2="19" y2="27" stroke={fg} strokeWidth="1.5"/>
-      </svg>
-    </div>
-  );
-}
-
-function ArrowBetween({ elapsed, startTime }) {
-  const reveal = interpolate(elapsed, [startTime, startTime + 0.3], [0, 1]);
-  return (
-    <div style={{width: 48, display:'flex', alignItems:'center',
-      justifyContent:'center', position:'relative'}}>
-      <svg width="48" height="24" viewBox="0 0 48 24" style={{opacity: reveal}}>
-        <line x1="0" y1="12" x2={34 * reveal + 8} y2="12" stroke={TERRA} strokeWidth="1.5"/>
-        {reveal > 0.6 && (
-          <path d="M38 6 L44 12 L38 18" stroke={TERRA} strokeWidth="1.5" fill="none"
-            strokeLinecap="round" strokeLinejoin="round"/>
-        )}
-      </svg>
-    </div>
-  );
-}
-
-// ══════════════════════════════════════════════════════════
-// Scene 4 (15 – 20s) · 产物：可编辑文本框
-// ══════════════════════════════════════════════════════════
-function Scene4_PPTEdit() {
-  const { elapsed } = useSprite();
-  const fadeIn = interpolate(elapsed, [0, 0.5], [0, 1]);
-  const pptScale = interpolate(elapsed, [0, 0.8], [0.94, 1], Easing.easeOut);
-
-  // Selection bounding box appears at 0.8s, handles animate in staggered
-  const selectOp = interpolate(elapsed, [0.9, 1.3], [0, 1]);
-
-  // Format panel slides in from right at 1.5s
-  const panelX = interpolate(elapsed, [1.6, 2.4], [80, 0], Easing.easeOut);
-  const panelOp = interpolate(elapsed, [1.6, 2.4], [0, 1]);
-
-  // Caption fades in 2.4s
-  const captionOp = interpolate(elapsed, [2.4, 3.0], [0, 1]);
-
-  // Checkboxes tick in sequentially
-  const chk1 = elapsed > 3.2 ? 1 : 0;
-  const chk2 = elapsed > 3.7 ? 1 : 0;
-  const chk3 = elapsed > 4.2 ? 1 : 0;
-
-  const fadeOut = interpolate(elapsed, [4.6, 5.0], [1, 0]);
-
-  return (
-    <div style={{position:'absolute', inset:0, background: CREAM,
-      opacity: fadeIn * fadeOut,
-      display:'flex', flexDirection:'column', alignItems:'center',
-      padding:'60px 60px 40px'}}>
-      <div style={{width:'100%', display:'flex', justifyContent:'space-between',
-        alignItems:'baseline', marginBottom: 20}}>
-        <div>
-          <div style={{fontFamily: mono, fontSize: 11, letterSpacing:'0.3em',
-            color: TERRA, marginBottom: 8}}>
-            <span>●</span>  SCENE 04 · THE ARTIFACT
-          </div>
-          <div style={{fontFamily: serif, fontSize: 52, fontWeight: 500, color: INK,
-            letterSpacing:'-0.01em'}}>
-            产物：可编辑文本框
-          </div>
-        </div>
-        <div style={{fontFamily: serif, fontStyle:'italic', fontSize: 18, color: ASH,
-          textAlign:'right', maxWidth: 340, lineHeight: 1.5}}>
-          在 PowerPoint 里<br/>
-          像素级复现，字还是字
-        </div>
-      </div>
-
-      <div style={{position:'relative', transform: `scale(${pptScale})`,
-        transformOrigin:'center center'}}>
-        <PPTMockup selectOp={selectOp} />
-
-        {/* Format panel */}
-        <div style={{position:'absolute', top: 94, right: -296,
-          width: 272, background:'#f5f2ed', border:`1px solid ${LINE}`,
-          boxShadow:'0 12px 30px rgba(0,0,0,0.08)',
-          transform: `translateX(${panelX}px)`, opacity: panelOp,
-          padding: 0}}>
-          <FormatPanel />
-        </div>
-      </div>
-
-      <div style={{marginTop: 28, display:'flex', alignItems:'center', gap: 48,
-        opacity: captionOp}}>
-        <div style={{fontFamily: serif, fontStyle:'italic', fontSize: 24,
-          color: TERRA, letterSpacing:'0.01em'}}>
-          原生 PowerPoint 文本框 · 不是图片
-        </div>
-        <div style={{display:'flex', gap: 28, fontFamily: mono, fontSize: 13}}>
-          <CheckRow label="文字可编辑" on={chk1} />
-          <CheckRow label="字体保留" on={chk2} />
-          <CheckRow label="位置/颜色精确" on={chk3} />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function CheckRow({ label, on }) {
-  return (
-    <div style={{display:'flex', alignItems:'center', gap: 8}}>
-      <div style={{width: 18, height: 18, border:`1.5px solid ${on ? TERRA : LINE}`,
-        background: on ? TERRA : 'transparent',
-        display:'flex', alignItems:'center', justifyContent:'center',
-        transition:'none'}}>
-        {on ? (
-          <svg width="12" height="12" viewBox="0 0 12 12">
-            <path d="M2 6 L5 9 L10 3" stroke="#fff" strokeWidth="2" fill="none"
-              strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        ) : null}
-      </div>
-      <span style={{color: on ? INK : ASH}}>{label}</span>
-    </div>
-  );
-}
-
-function PPTMockup({ selectOp }) {
-  const W = 1100, H = 620;
-  return (
-    <div style={{width: W, height: H, background:'#f4f1ec',
-      border:`1px solid ${LINE}`, boxShadow:'0 22px 50px rgba(0,0,0,0.14)',
-      display:'flex', flexDirection:'column'}}>
-      {/* PPT ribbon (title bar + tabs) */}
-      <div style={{height: 32, background:'#dcd7cd', display:'flex',
-        alignItems:'center', padding:'0 14px', gap: 8,
-        borderBottom:`1px solid ${LINE}`}}>
-        <div style={{width:10, height:10, borderRadius:'50%', background:'#ff5f57'}} />
-        <div style={{width:10, height:10, borderRadius:'50%', background:'#febc2e'}} />
-        <div style={{width:10, height:10, borderRadius:'50%', background:'#28c840'}} />
-        <div style={{flex: 1, textAlign:'center', fontFamily: sans, fontSize: 11,
-          color: ASH, letterSpacing:'0.02em'}}>
-          deck.pptx — PowerPoint
-        </div>
-      </div>
-      <div style={{height: 34, background:'#ebe7de', display:'flex',
-        alignItems:'center', padding:'0 18px', gap: 22,
-        fontFamily: sans, fontSize: 11, color: INK,
-        borderBottom:`1px solid ${LINE}`}}>
-        <span style={{color: TERRA, fontWeight: 600,
-          borderBottom: `2px solid ${TERRA}`, paddingBottom: 6,
-          marginBottom: -7}}>Home</span>
-        <span style={{opacity: 0.55}}>Insert</span>
-        <span style={{opacity: 0.55}}>Design</span>
-        <span style={{opacity: 0.55}}>Transitions</span>
-        <span style={{opacity: 0.55}}>Animations</span>
-        <span style={{opacity: 0.55}}>Slide Show</span>
-        <span style={{opacity: 0.55}}>Review</span>
-        <span style={{opacity: 0.55}}>View</span>
-      </div>
-
-      {/* Body: slide panel (left) + slide canvas (main) */}
-      <div style={{flex: 1, display:'flex'}}>
-        {/* Thumbnails */}
-        <div style={{width: 160, background:'#eae5db',
-          borderRight:`1px solid ${LINE}`, padding:'12px 12px',
-          display:'flex', flexDirection:'column', gap: 8}}>
-          {[0,1,2,3].map(i => (
-            <div key={i} style={{
-              background:'#fff',
-              border: i === 2 ? `2px solid ${TERRA}` : `1px solid ${LINE}`,
-              aspectRatio:'16/9', position:'relative',
-              padding: 8, display:'flex', alignItems:'center',
-              justifyContent:'center'}}>
-              <div style={{position:'absolute', top: 4, left: 4,
-                fontFamily: mono, fontSize: 8, color: ASH}}>{i+1}</div>
-              {i === 2 && (
-                <div style={{fontFamily: serif, fontStyle:'italic', fontSize: 12,
-                  color: INK}}>"Less..."</div>
-              )}
-              {i !== 2 && (
-                <div style={{width:'70%', height: 3, background: LINE}} />
-              )}
-            </div>
-          ))}
-        </div>
-
-        {/* Slide canvas */}
-        <div style={{flex: 1, background:'#e8e4dc', display:'flex',
-          alignItems:'center', justifyContent:'center', padding: 32,
-          position:'relative'}}>
-          <div style={{width: 720, height: 405, background:'#faf6ef',
-            boxShadow:'0 8px 24px rgba(0,0,0,0.1)',
-            border:`1px solid ${LINE}`, position:'relative'}}>
-            {/* The editable text box */}
-            <div style={{position:'absolute', top:'50%', left:'50%',
-              transform:'translate(-50%, -50%)', textAlign:'center',
-              padding:'18px 40px'}}>
-              <div style={{fontFamily: serif, fontStyle:'italic',
-                fontSize: 72, color: INK, lineHeight: 1.1,
-                letterSpacing:'-0.01em'}}>
-                "Less, but <span style={{color: TERRA}}>better</span>."
-              </div>
-              <div style={{fontFamily: serif, fontSize: 14, color: ASH,
-                marginTop: 14, letterSpacing:'0.1em'}}>
-                — Dieter Rams
-              </div>
-            </div>
-            {/* Selection bounding box + 8 handles */}
-            {selectOp > 0 && <SelectionBox opacity={selectOp} />}
-
-            {/* slide number */}
-            <div style={{position:'absolute', bottom: 10, right: 14,
-              fontFamily: sans, fontSize: 9, color: ASH}}>3</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function SelectionBox({ opacity }) {
-  // Box centered around the textbox (~ 520×160)
-  const BW = 560, BH = 170;
-  const color = '#4a9eff';
-  const handles = [
-    { x: 0, y: 0 }, { x: 0.5, y: 0 }, { x: 1, y: 0 },
-    { x: 0, y: 0.5 }, { x: 1, y: 0.5 },
-    { x: 0, y: 1 }, { x: 0.5, y: 1 }, { x: 1, y: 1 },
-  ];
-  return (
-    <div style={{position:'absolute', top:'50%', left:'50%',
-      width: BW, height: BH, transform:'translate(-50%, -50%)',
-      border: `1.5px solid ${color}`, opacity,
-      boxShadow:`0 0 0 1px rgba(255,255,255,0.6)`, pointerEvents:'none'}}>
-      {handles.map((h, i) => (
-        <div key={i} style={{position:'absolute',
-          left: `${h.x * 100}%`, top: `${h.y * 100}%`,
-          transform:'translate(-50%, -50%)',
-          width: 10, height: 10, background:'#fff',
-          border: `1.5px solid ${color}`, borderRadius: 2}} />
-      ))}
-      {/* Rotate handle */}
-      <div style={{position:'absolute', left:'50%', top: -26,
-        transform:'translateX(-50%)',
-        width: 10, height: 10, background:'#fff',
-        border: `1.5px solid ${color}`, borderRadius: '50%'}} />
-      <div style={{position:'absolute', left:'50%', top: -17,
-        transform:'translateX(-50%)', width: 1, height: 9, background: color}} />
-      {/* Label: Text Box */}
-      <div style={{position:'absolute', top: -26, left: 0,
-        fontFamily: mono, fontSize: 10, color: color,
-        background:'rgba(255,255,255,0.9)', padding:'2px 6px',
-        letterSpacing:'0.1em'}}>
-        TEXT BOX · shape #1
-      </div>
-    </div>
-  );
-}
-
-function FormatPanel() {
-  return (
-    <div>
-      <div style={{padding:'12px 16px', borderBottom:`1px solid ${LINE}`,
-        display:'flex', justifyContent:'space-between', alignItems:'center',
-        background:'#ebe7de'}}>
-        <div style={{fontFamily: sans, fontSize: 12, color: INK,
-          fontWeight: 600}}>Format Text</div>
-        <div style={{fontFamily: mono, fontSize: 10, color: ASH}}>✕</div>
-      </div>
-      <div style={{padding:'16px'}}>
-        <div style={{fontFamily: sans, fontSize: 10, color: ASH,
-          letterSpacing:'0.15em', marginBottom: 8}}>FONT</div>
-        <div style={{background:'#fff', border:`1px solid ${LINE}`,
-          padding:'8px 10px', marginBottom: 14,
-          display:'flex', justifyContent:'space-between', alignItems:'center',
-          fontFamily: sans, fontSize: 12, color: INK}}>
-          <span style={{fontFamily: serif, fontStyle:'italic'}}>Newsreader</span>
-          <span style={{color: ASH, fontSize: 10}}>▾</span>
-        </div>
-        <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap: 10,
-          marginBottom: 14}}>
-          <div>
-            <div style={{fontFamily: sans, fontSize: 10, color: ASH,
-              letterSpacing:'0.15em', marginBottom: 6}}>SIZE</div>
-            <div style={{background:'#fff', border:`1px solid ${LINE}`,
-              padding:'6px 10px', fontFamily: sans, fontSize: 12}}>72 pt</div>
-          </div>
-          <div>
-            <div style={{fontFamily: sans, fontSize: 10, color: ASH,
-              letterSpacing:'0.15em', marginBottom: 6}}>WEIGHT</div>
-            <div style={{background:'#fff', border:`1px solid ${LINE}`,
-              padding:'6px 10px', fontFamily: sans, fontSize: 12}}>400 · italic</div>
-          </div>
-        </div>
-        <div style={{fontFamily: sans, fontSize: 10, color: ASH,
-          letterSpacing:'0.15em', marginBottom: 6}}>COLOR</div>
-        <div style={{display:'flex', gap: 8, marginBottom: 14}}>
-          <div style={{width: 28, height: 28, background: INK, border:`2px solid ${INK}`}} />
-          <div style={{width: 28, height: 28, background: TERRA,
-            outline:`2px solid ${TERRA}`, outlineOffset: 1}} />
-          <div style={{width: 28, height: 28, background: OLIVE}} />
-          <div style={{width: 28, height: 28, background: DEEP_BLUE}} />
-          <div style={{width: 28, height: 28, background:'#fff', border:`1px solid ${LINE}`}} />
-        </div>
-        <div style={{fontFamily: mono, fontSize: 10, color: ASH,
-          letterSpacing:'0.1em', lineHeight: 1.6,
-          paddingTop: 10, borderTop:`1px solid ${LINE}`}}>
-          x: 2.4in · y: 2.1in<br/>
-          w: 5.8in · h: 1.7in
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ══════════════════════════════════════════════════════════
-// Scene 5 (20 – 24s) · 收尾
-// ══════════════════════════════════════════════════════════
-function Scene5_Final() {
-  const { elapsed } = useSprite();
-  const tagOp = interpolate(elapsed, [0, 0.5], [0, 1]);
-  const mainY = interpolate(elapsed, [0.2, 1.2], [50, 0], Easing.easeOut);
-  const mainOp = interpolate(elapsed, [0.2, 1.0], [0, 1]);
-  const lineW = interpolate(elapsed, [1.1, 1.8], [0, 540]);
-  const subOp = interpolate(elapsed, [1.5, 2.2], [0, 1]);
-  const monoOp = interpolate(elapsed, [2.2, 2.8], [0, 1]);
-
-  return (
-    <div style={{position:'absolute', inset:0, background: CREAM,
-      display:'flex', alignItems:'center', justifyContent:'center',
-      flexDirection:'column'}}>
-      <div style={{fontFamily: mono, fontSize: 12, letterSpacing:'0.4em',
-        color: TERRA, marginBottom: 32, opacity: tagOp}}>
-        ONE SOURCE · TWO STATES
-      </div>
-      <div style={{fontFamily: serif, fontSize: 220, fontWeight: 500,
-        color: INK, lineHeight: 0.98, letterSpacing:'-0.03em',
-        opacity: mainOp, transform: `translateY(${mainY}px)`}}>
-        一<span style={{color: ASH, fontStyle:'italic'}}>源</span>
-        <span style={{color: TERRA, margin:'0 28px'}}>·</span>
-        双<span style={{color: ASH, fontStyle:'italic'}}>态</span>
-      </div>
-      <div style={{height: 1, background: INK, width: lineW, marginTop: 46}} />
-      <div style={{fontFamily: serif, fontStyle:'italic', fontSize: 28,
-        color: ASH, marginTop: 28, opacity: subOp, letterSpacing:'0.02em'}}>
-        浏览器里演讲  ·  PowerPoint 里二次编辑
-      </div>
-      <div style={{fontFamily: mono, fontSize: 18, color: INK, marginTop: 34,
-        opacity: monoOp, letterSpacing:'0.1em',
-        padding:'12px 28px', background:'#fff', border:`1px solid ${LINE}`}}>
-        <span style={{color: OLIVE}}>deck.html</span>
-        <span style={{color: TERRA, margin:'0 14px'}}>⇌</span>
-        <span style={{color: DEEP_BLUE}}>deck.pptx</span>
-      </div>
-    </div>
-  );
-}
-
-// ── Watermark ─────────────────────────────────────────────
-function Watermark() {
-  return (
-    <div style={{position:'absolute', bottom: 24, right: 32,
-      fontSize: 11, color: 'rgba(0,0,0,0.38)', letterSpacing:'0.15em',
-      fontFamily: mono, pointerEvents:'none', zIndex: 100}}>
-      Created by Huashu-Design
-    </div>
-  );
-}
-
-// ── Main composition ──────────────────────────────────────
-function App() {
-  return (
-    <Stage duration={24} width={1920} height={1080} bgColor={CREAM}>
-      <Sprite start={0} end={3}><Scene1_Title /></Sprite>
-      <Sprite start={3} end={9}><Scene2_DeckFlip /></Sprite>
-      <Sprite start={9} end={15}><Scene3_Pipeline /></Sprite>
-      <Sprite start={15} end={20}><Scene4_PPTEdit /></Sprite>
-      <Sprite start={20} end={24}><Scene5_Final /></Sprite>
-      <Watermark />
-    </Stage>
-  );
-}
-
-ReactDOM.createRoot(document.getElementById('root')).render(<App />);
 </script>
 </body>
 </html>

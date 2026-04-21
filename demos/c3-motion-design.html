@@ -1,556 +1,1134 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
+<!doctype html>
+<html lang="zh-Hans">
 <head>
-<meta charset="UTF-8">
-<title>Huashu-Design · Motion Design</title>
-<script crossorigin src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
-<script crossorigin src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
-<script src="https://unpkg.com/@babel/standalone@7.25.6/babel.min.js"></script>
+<meta charset="utf-8" />
+<title>huashu-design · c3 motion design（中文版）</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Noto+Serif+SC:wght@400;500;600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300..700;1,8..60,300..700&family=Noto+Serif+SC:wght@300;400;500;600;700&family=Inter:wght@100;200;300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { width: 100%; height: 100%; overflow: hidden; }
-  body { background: #0c0c0c; font-family: 'Newsreader', 'Noto Serif SC', Georgia, serif; color: #1a1a1a; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+:root {
+  --bg: #000000;
+  --ink: #FFFFFF;
+  --ink-80: rgba(255,255,255,0.82);
+  --ink-60: rgba(255,255,255,0.58);
+  --muted: rgba(255,255,255,0.40);
+  --dim: rgba(255,255,255,0.18);
+  --hairline: rgba(255,255,255,0.12);
+  --hair-strong: rgba(255,255,255,0.22);
+  --accent: #D97757;
+  --accent-deep: #B85D3D;
+  --accent-dim: rgba(217,119,87,0.25);
+  --serif-cn: "Noto Serif SC", "Songti SC", "STSong", serif;
+  --serif-en: "Source Serif 4", "Tiempos Headline", Georgia, serif;
+  --sans: "Inter", -apple-system, "PingFang SC", "HarmonyOS Sans SC", system-ui, sans-serif;
+  --mono: "JetBrains Mono", "SF Mono", ui-monospace, monospace;
+}
+
+html, body {
+  margin: 0; padding: 0;
+  background: #000;
+  overflow: hidden;
+  font-family: var(--sans);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+* { box-sizing: border-box; }
+
+.stage {
+  position: fixed;
+  top: 50%; left: 50%;
+  width: 1920px; height: 1080px;
+  transform-origin: center center;
+  background: var(--bg);
+  overflow: hidden;
+}
+
+/* Subtle film grain overlay, 2% */
+.stage::after {
+  content: '';
+  position: absolute; inset: 0;
+  pointer-events: none;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><filter id='n'><feTurbulence baseFrequency='0.9' numOctaves='2'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  mix-blend-mode: overlay;
+  z-index: 200;
+}
+
+/* Watermark */
+.watermark-tl {
+  position: absolute;
+  top: 40px; left: 56px;
+  font-family: var(--mono);
+  font-size: 14px;
+  letter-spacing: 0.2em;
+  color: rgba(255,255,255,0.16);
+  z-index: 50;
+  text-transform: none;
+  font-weight: 500;
+}
+.watermark-br {
+  position: absolute;
+  bottom: 32px; right: 48px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.24em;
+  color: rgba(255,255,255,0.22);
+  z-index: 100;
+  text-transform: uppercase;
+  opacity: 0;
+  transition: opacity 0.6s;
+}
+.watermark-br.visible { opacity: 1; }
+
+/* Scene container */
+.scene {
+  position: absolute; inset: 0;
+  opacity: 0;
+  visibility: hidden;
+  will-change: opacity;
+}
+.scene.visible { visibility: visible; }
+
+/* ============ Split layout ============ */
+.split {
+  position: absolute; inset: 0;
+}
+.split-top {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 48%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.split-bottom {
+  position: absolute;
+  bottom: 0; left: 0;
+  width: 100%; height: 52%;
+}
+
+/* Horizontal divider hairline */
+.split-divider {
+  position: absolute;
+  left: 160px; right: 160px;
+  top: 48%;
+  height: 1px;
+  background: var(--hairline);
+  z-index: 5;
+}
+
+/* Section label (top-left of each half) */
+.panel-label {
+  position: absolute;
+  top: 32px;
+  left: 160px;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.3em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+.split-bottom .panel-label { top: 32px; }
+.panel-label .accent { color: var(--accent); font-weight: 500; }
+
+/* ============ Top: Timeline ============ */
+.timeline-wrap {
+  width: 1600px;
+  position: relative;
+  margin-top: 40px;
+}
+.timeline-track {
+  position: relative;
+  height: 2px;
+  background: var(--hairline);
+  width: 100%;
+}
+.timeline-track .fill {
+  position: absolute;
+  top: 0; left: 0;
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent) 0%, rgba(217,119,87,0.4) 100%);
+  width: 0%;
+  will-change: width;
+}
+
+/* Tick marks */
+.tick {
+  position: absolute;
+  width: 1px;
+  height: 10px;
+  background: var(--muted);
+  top: -4px;
+  transform: translateX(-0.5px);
+}
+.tick.major { height: 14px; top: -6px; background: var(--ink-60); }
+.tick-label {
+  position: absolute;
+  top: 18px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 0.1em;
+  transform: translateX(-50%);
+}
+
+/* Playhead */
+.playhead {
+  position: absolute;
+  top: -28px;
+  left: 0;
+  width: 2px;
+  height: 58px;
+  background: var(--accent);
+  transform: translateX(-1px);
+  will-change: transform;
+  z-index: 10;
+  box-shadow: 0 0 20px rgba(217,119,87,0.5);
+}
+.playhead::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 14px; height: 14px;
+  background: var(--accent);
+  border-radius: 50%;
+  box-shadow: 0 0 16px rgba(217,119,87,0.6);
+}
+.playhead::after {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 6px; height: 6px;
+  background: var(--bg);
+  border-radius: 50%;
+  z-index: 2;
+}
+
+/* API capsules on timeline */
+.api-capsule {
+  position: absolute;
+  top: -92px;
+  transform: translateX(-50%);
+  padding: 10px 20px;
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(8px);
+  font-family: var(--mono);
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--ink-60);
+  letter-spacing: 0.02em;
+  transition: none;
+  will-change: color, border-color, transform, box-shadow;
+  white-space: nowrap;
+}
+.api-capsule.lit {
+  color: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 30px rgba(217,119,87,0.35);
+}
+.api-capsule .tiny {
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.2em;
+  margin-right: 10px;
+  display: inline-block;
+  vertical-align: middle;
+  opacity: 0.7;
+}
+.api-capsule.lit .tiny { color: var(--accent); opacity: 0.9; }
+
+/* Tick connector (short vertical line from capsule to timeline) */
+.capsule-stem {
+  position: absolute;
+  top: -48px;
+  width: 1px;
+  height: 44px;
+  background: var(--hairline);
+  transform: translateX(-0.5px);
+  z-index: 1;
+}
+.capsule-stem.lit { background: var(--accent); }
+
+/* ============ Bottom: Driven stage ============ */
+.driven-stage {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+}
+
+.viz {
+  position: absolute;
+  top: 46%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 1000px; height: 400px;
+  opacity: 0;
+  will-change: opacity;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* viz 1: useTime — clock */
+.viz-clock {
+  position: relative;
+  width: 280px; height: 280px;
+  border: 1.5px solid var(--hair-strong);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.viz-clock .tickmark {
+  position: absolute;
+  width: 1px;
+  height: 8px;
+  background: var(--muted);
+  top: 10px;
+  left: 50%;
+  transform-origin: 50% 130px;
+}
+.viz-clock .tickmark.q {
+  width: 2px;
+  height: 14px;
+  background: var(--ink-60);
+}
+.viz-clock .hand-h {
+  position: absolute;
+  width: 3px; height: 80px;
+  background: var(--ink);
+  left: 50%;
+  bottom: 50%;
+  transform-origin: 50% 100%;
+  transform: translateX(-50%) rotate(30deg);
+  border-radius: 2px;
+  will-change: transform;
+}
+.viz-clock .hand-m {
+  position: absolute;
+  width: 2px; height: 110px;
+  background: var(--ink-80);
+  left: 50%;
+  bottom: 50%;
+  transform-origin: 50% 100%;
+  transform: translateX(-50%) rotate(120deg);
+  border-radius: 2px;
+  will-change: transform;
+}
+.viz-clock .hand-s {
+  position: absolute;
+  width: 1.5px; height: 120px;
+  background: var(--accent);
+  left: 50%;
+  bottom: 50%;
+  transform-origin: 50% 100%;
+  transform: translateX(-50%) rotate(0deg);
+  border-radius: 2px;
+  will-change: transform;
+  box-shadow: 0 0 10px rgba(217,119,87,0.4);
+}
+.viz-clock .center-dot {
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: var(--accent);
+  z-index: 5;
+  box-shadow: 0 0 10px rgba(217,119,87,0.6);
+}
+.viz-clock-label {
+  position: absolute;
+  bottom: -48px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--muted);
+  letter-spacing: 0.12em;
+  white-space: nowrap;
+}
+.viz-clock-label .val {
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+/* viz 2: interpolate — morph box */
+.viz-morph {
+  display: flex;
+  gap: 80px;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+.morph-box {
+  width: 260px; height: 260px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.morph-rect {
+  background: var(--accent);
+  border-radius: 4px;
+  will-change: width, height, background, border-radius, transform;
+  box-shadow: 0 0 40px rgba(217,119,87,0.25);
+}
+.morph-label {
+  position: absolute;
+  bottom: -48px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--muted);
+  letter-spacing: 0.12em;
+  white-space: nowrap;
+}
+.morph-label .val { color: var(--accent); font-variant-numeric: tabular-nums; }
+.morph-arrow {
+  font-family: var(--mono);
+  font-size: 28px;
+  color: var(--muted);
+  letter-spacing: 0.2em;
+}
+
+/* viz 3: Easing — curves */
+.viz-curves {
+  position: relative;
+  width: 720px; height: 320px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.curves-svg {
+  width: 100%; height: 100%;
+}
+.curve-label {
+  position: absolute;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+/* viewBox 720x320 → right edge ≈ 680 of 720 → 94%. Vertical:
+   y=40 is visual top (output value 1), y=260 is bottom (value 0).
+   Labels go at right side, vertically aligned with where each curve
+   approaches its asymptote at t≈0.7.
+   expoOut at t=0.7 ~ 0.99 (≈ y=42)
+   cubicOut at t=0.7 ~ 0.973 (≈ y=46)
+   linear at t=0.7 ~ 0.7 (≈ y=106)
+   So spatial order top→bottom: expoOut, cubicOut, linear
+*/
+.curve-label.l-expo   { top:  6%; right: 4%; color: var(--accent); }
+.curve-label.l-cubic  { top: 16%; right: 4%; color: rgba(255,255,255,0.78); }
+.curve-label.l-linear { top: 36%; right: 4%; color: rgba(255,255,255,0.42); }
+
+.curve-dot {
+  position: absolute;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 14px rgba(217,119,87,0.6);
+  will-change: left, top;
+}
+
+/* viz 4: useSprite — choreographed grid */
+.viz-sprites {
+  display: grid;
+  grid-template-columns: repeat(6, 60px);
+  grid-template-rows: repeat(4, 60px);
+  gap: 18px;
+  justify-content: center;
+  align-content: center;
+  padding: 40px 0;
+}
+.sprite {
+  width: 60px; height: 60px;
+  background: var(--hairline);
+  border: 1px solid var(--dim);
+  will-change: transform, opacity, background;
+  opacity: 0;
+  border-radius: 2px;
+}
+
+.sprite-label {
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--muted);
+  letter-spacing: 0.12em;
+  white-space: nowrap;
+}
+.sprite-label .val { color: var(--accent); font-variant-numeric: tabular-nums; }
+
+/* ============ Scene 0: Opening title ============ */
+.scene-intro {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.scene-intro .title {
+  font-family: var(--serif-cn);
+  font-size: 108px;
+  font-weight: 300;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  line-height: 1.05;
+  will-change: opacity, transform, font-weight;
+}
+.scene-intro .title .accent { color: var(--accent); }
+.scene-intro .sub {
+  margin-top: 28px;
+  font-family: var(--mono);
+  font-size: 16px;
+  color: var(--muted);
+  letter-spacing: 0.3em;
+}
+
+/* ============ Scene 2: Brand reveal (米色面板标准动作) ============ */
+.scene-brand {
+  background: transparent;
+  pointer-events: none;
+  z-index: 150;
+}
+.brand-panel {
+  position: absolute;
+  inset: 0;
+  background: #F5F4F0;
+  transform: translateY(100%);
+  will-change: transform;
+}
+.brand-wordmark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, calc(-50% + 20px));
+  font-family: "Source Serif 4", Georgia, serif;
+  font-size: 72px;
+  font-weight: 100;
+  font-variation-settings: "wght" 100;
+  letter-spacing: -0.01em;
+  color: #1A1918;
+  text-align: center;
+  line-height: 1;
+  opacity: 0;
+  white-space: nowrap;
+  will-change: opacity, transform, font-weight, font-variation-settings;
+}
+.brand-wordmark .accent { color: #D97757; font-weight: inherit; }
+.brand-line {
+  position: absolute;
+  top: calc(50% + 60px);
+  left: 50%;
+  transform: translateX(-50%);
+  height: 2px;
+  width: 0px;
+  background: #D97757;
+  will-change: width;
+}
+
+/* ============ Replay button (hidden during record) ============ */
+.replay-btn {
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 12px 32px;
+  border: 1px solid var(--hair-strong);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink-60);
+  font-family: var(--mono);
+  font-size: 13px;
+  letter-spacing: 0.2em;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s;
+  z-index: 300;
+}
+.replay-btn.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
 </style>
 </head>
 <body>
-<div id="root"></div>
 
-<!-- animations.jsx inlined -->
-<script type="text/babel">
-(function() {
-  const { createContext, useContext, useState, useEffect, useRef } = React;
-  const TimeContext = createContext({ time: 0, duration: 10, playing: false });
-  const SpriteContext = createContext(null);
-  const Easing = {
-    linear: t => t,
-    easeIn: t => t * t,
-    easeOut: t => 1 - (1 - t) * (1 - t),
-    easeInOut: t => t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2,
-    spring: t => {
-      const c = (2 * Math.PI) / 3;
-      return t === 0 ? 0 : t === 1 ? 1 : Math.pow(2, -10 * t) * Math.sin((t * 10 - 0.75) * c) + 1;
-    },
-  };
-  function interpolate(t, input, output, easing) {
-    const [a, b] = input, [x, y] = output;
-    if (t <= a) return x; if (t >= b) return y;
-    let p = (t - a) / (b - a); if (easing) p = easing(p);
-    return x + (y - x) * p;
-  }
-  function useTime() { return useContext(TimeContext).time; }
-  function useSprite() { return useContext(SpriteContext) || { t: 0, elapsed: 0, duration: 0 }; }
-  function Stage({ duration = 10, width = 1920, height = 1080, loop = true, children, bgColor = '#fff' }) {
-    const [time, setTime] = useState(0);
-    const [playing, setPlaying] = useState(true);
-    const [scale, setScale] = useState(1);
-    const rafRef = useRef(null);
-    const effectiveLoop = (typeof window !== 'undefined' && window.__recording) ? false : loop;
-    useEffect(() => {
-      const update = () => {
-        const s = Math.min(window.innerWidth / width, (window.innerHeight - 56) / height);
-        setScale(s);
-      };
-      update(); window.addEventListener('resize', update);
-      return () => window.removeEventListener('resize', update);
-    }, [width, height]);
-    useEffect(() => {
-      if (!playing) return;
-      let cancelled = false, last = null;
-      function tick(now) {
-        if (cancelled) return;
-        if (last === null) { last = now; if (typeof window !== 'undefined') window.__ready = true; }
-        const delta = (now - last) / 1000; last = now;
-        setTime(prev => {
-          const next = prev + delta;
-          if (next >= duration) return effectiveLoop ? 0 : duration - 0.001;
-          return next;
-        });
-        rafRef.current = requestAnimationFrame(tick);
-      }
-      const start = () => { if (!cancelled) rafRef.current = requestAnimationFrame(tick); };
-      if (document.fonts && document.fonts.ready) document.fonts.ready.then(start); else start();
-      return () => { cancelled = true; cancelAnimationFrame(rafRef.current); };
-    }, [playing, duration, effectiveLoop]);
-    const progress = time / duration;
-    const ctx = { time, duration, playing, setPlaying, setTime };
-    return (
-      <TimeContext.Provider value={ctx}>
-        <div style={{position:'fixed', inset:0, background:'#0c0c0c', display:'flex', flexDirection:'column'}}>
-          <div style={{flex:1, position:'relative', overflow:'hidden'}}>
-            <div style={{position:'absolute', top:'50%', left:'50%', transformOrigin:'center center', width, height, background: bgColor, overflow:'hidden', transform:`translate(-50%, -50%) scale(${scale})`}}>
-              {children}
+<div class="stage" id="stage">
+
+  <!-- Top-left watermark (always on) -->
+  <div class="watermark-tl">HUASHU · DESIGN</div>
+
+  <!-- ============ Scene 0: Intro (0 → 1.6s) ============ -->
+  <div class="scene scene-intro" id="scene-intro">
+    <div class="title" id="introTitle">时间轴 <span class="accent">=</span> 代码</div>
+    <div class="sub" id="introSub">TIMELINE · MOTION · ENGINE</div>
+  </div>
+
+  <!-- ============ Scene 1: Split view (1.6 → 8.2s) ============ -->
+  <div class="scene" id="scene-main">
+    <div class="split">
+
+      <!-- TOP: Timeline -->
+      <div class="split-top">
+        <div class="panel-label">TIMELINE · <span class="accent">PLAYHEAD</span></div>
+        <div class="timeline-wrap">
+          <div class="timeline-track">
+            <div class="fill" id="timelineFill"></div>
+
+            <!-- Tick marks (10 ticks for 10s) -->
+            <div class="tick" style="left: 0%;"></div>
+            <div class="tick major" style="left: 0%;"></div>
+            <div class="tick" style="left: 10%;"></div>
+            <div class="tick major" style="left: 20%;"></div>
+            <div class="tick" style="left: 30%;"></div>
+            <div class="tick major" style="left: 40%;"></div>
+            <div class="tick" style="left: 50%;"></div>
+            <div class="tick major" style="left: 60%;"></div>
+            <div class="tick" style="left: 70%;"></div>
+            <div class="tick major" style="left: 80%;"></div>
+            <div class="tick" style="left: 90%;"></div>
+            <div class="tick major" style="left: 100%;"></div>
+
+            <div class="tick-label" style="left: 0%;">0s</div>
+            <div class="tick-label" style="left: 20%;">2s</div>
+            <div class="tick-label" style="left: 40%;">4s</div>
+            <div class="tick-label" style="left: 60%;">6s</div>
+            <div class="tick-label" style="left: 80%;">8s</div>
+            <div class="tick-label" style="left: 100%;">10s</div>
+
+            <!-- API capsules anchored at their trigger points -->
+            <!-- Scene-main spans 1.6→8.2; timeline maps 0→10s globally for clarity.
+                 cap positions here mirror when each API is "active" on the lower viz. -->
+            <!-- useTime: global t = 1.8 → 3.3 → center ~2.5s → 25% -->
+            <div class="capsule-stem" id="stem-time" style="left: 18%;"></div>
+            <div class="api-capsule" id="cap-time" style="left: 18%;">
+              <span class="tiny">01</span>useTime
             </div>
-          </div>
-          <div className="no-record" style={{position:'fixed', bottom:0, left:0, right:0, background:'rgba(0,0,0,0.8)', padding:'12px 20px', display:'flex', alignItems:'center', gap:16, color:'#fff', fontSize:12, zIndex:100}}>
-            <button onClick={()=>setPlaying(p=>!p)} style={{background:'none', border:'1px solid rgba(255,255,255,0.3)', color:'#fff', padding:'6px 14px', borderRadius:4, cursor:'pointer', fontSize:12}}>{playing?'⏸ 暂停':'▶ 播放'}</button>
-            <button onClick={()=>setTime(0)} style={{background:'none', border:'1px solid rgba(255,255,255,0.3)', color:'#fff', padding:'6px 14px', borderRadius:4, cursor:'pointer', fontSize:12}}>⏮ 开始</button>
-            <div style={{fontFamily:'ui-monospace, monospace', fontVariantNumeric:'tabular-nums', minWidth:90}}>{time.toFixed(2)}s / {duration.toFixed(2)}s</div>
-            <div style={{flex:1, height:4, background:'rgba(255,255,255,0.2)', borderRadius:2, position:'relative'}}>
-              <div style={{position:'absolute', top:0, left:0, height:'100%', width:`${progress*100}%`, background:'#fff', borderRadius:2}} />
+
+            <!-- interpolate: 3.5 → 5s → center 4.2s → 42% -->
+            <div class="capsule-stem" id="stem-interp" style="left: 38%;"></div>
+            <div class="api-capsule" id="cap-interp" style="left: 38%;">
+              <span class="tiny">02</span>interpolate
             </div>
+
+            <!-- Easing: 5 → 6.5s → center 5.7s → 57% -->
+            <div class="capsule-stem" id="stem-easing" style="left: 58%;"></div>
+            <div class="api-capsule" id="cap-easing" style="left: 58%;">
+              <span class="tiny">03</span>Easing
+            </div>
+
+            <!-- useSprite: 6.5 → 8s → center 7.2s → 72% -->
+            <div class="capsule-stem" id="stem-sprite" style="left: 80%;"></div>
+            <div class="api-capsule" id="cap-sprite" style="left: 80%;">
+              <span class="tiny">04</span>useSprite
+            </div>
+
+            <!-- Playhead -->
+            <div class="playhead" id="playhead"></div>
           </div>
         </div>
-      </TimeContext.Provider>
-    );
-  }
-  function Sprite({ start = 0, end, children, style }) {
-    const { time } = useContext(TimeContext);
-    const actualEnd = end == null ? Infinity : end;
-    if (time < start || time >= actualEnd) return null;
-    const duration = actualEnd - start;
-    const elapsed = time - start;
-    const t = duration === 0 ? 1 : Math.max(0, Math.min(1, elapsed / duration));
-    return (
-      <SpriteContext.Provider value={{ t, elapsed, duration, start, end: actualEnd }}>
-        <div style={{position:'absolute', inset:0, ...style}}>{children}</div>
-      </SpriteContext.Provider>
-    );
-  }
-  window.Animations = { Stage, Sprite, useTime, useSprite, Easing, interpolate };
-})();
-</script>
-
-<!-- Demo scene -->
-<script type="text/babel">
-const { Stage, Sprite, useTime, useSprite, Easing, interpolate } = window.Animations;
-
-const CREAM = '#FAF6EF';
-const INK = '#1a1a1a';
-const TERRA = '#C04A1A';
-const OLIVE = '#6a6b4e';
-const DEEP_BLUE = '#2a3552';
-const ASH = '#6b6b6b';
-const LINE = '#d9d2c5';
-
-const serif = "'Newsreader', 'Noto Serif SC', Georgia, serif";
-const sans = "'Inter', -apple-system, sans-serif";
-const mono = "'JetBrains Mono', ui-monospace, monospace";
-
-// ── Scene 1: Title (0 – 3s) ────────────────────────────
-function Scene1_Title() {
-  const { elapsed } = useSprite();
-  const titleY = interpolate(elapsed, [0, 1.2], [60, 0], Easing.easeOut);
-  const titleOp = interpolate(elapsed, [0, 0.8], [0, 1]);
-  const subOp = interpolate(elapsed, [0.6, 1.4], [0, 1]);
-  const lineW = interpolate(elapsed, [0.9, 1.6], [0, 520]);
-  const apiOp = interpolate(elapsed, [1.4, 2.2], [0, 1]);
-  const fadeOut = interpolate(elapsed, [2.6, 3.0], [1, 0]);
-
-  return (
-    <div style={{position:'absolute', inset:0, background: CREAM, opacity: fadeOut,
-      display:'flex', alignItems:'center', justifyContent:'center', flexDirection:'column'}}>
-      <div style={{fontFamily: mono, fontSize: 12, letterSpacing:'0.4em',
-        color: TERRA, marginBottom: 24, opacity: titleOp}}>
-        动画引擎 · Stage + Sprite
-      </div>
-      <div style={{fontFamily: serif, fontSize: 148, fontWeight: 500, color: INK,
-        lineHeight: 1, letterSpacing:'-0.02em', opacity: titleOp,
-        transform: `translateY(${titleY}px)`}}>
-        <span style={{fontStyle:'italic', color: TERRA}}>Motion</span> Design
-      </div>
-      <div style={{height: 1, background: INK, width: lineW, marginTop: 36}} />
-      <div style={{fontFamily: serif, fontStyle:'italic', fontSize: 24, color: ASH,
-        marginTop: 28, opacity: subOp}}>
-        时间驱动 · 可编排 · 60fps 导出
-      </div>
-      <div style={{fontFamily: mono, fontSize: 14, color: ASH,
-        marginTop: 40, opacity: apiOp, letterSpacing:'0.1em'}}>
-        &lt;Stage&gt; · &lt;Sprite&gt; · useTime() · useSprite() · interpolate() · Easing
-      </div>
-    </div>
-  );
-}
-
-// ── Scene 2: Easing functions comparison (3 – 8s) ────────
-function Scene2_Easing() {
-  const { elapsed } = useSprite();
-  const titleOp = interpolate(elapsed, [0, 0.4], [0, 1]);
-  const fadeOut = interpolate(elapsed, [4.6, 5.0], [1, 0]);
-
-  // Lane sweep cycle every 2s
-  const cycle = (elapsed % 2.2) / 2.0;
-  const sweepT = Math.min(1, Math.max(0, cycle));
-
-  const curves = [
-    { name: 'linear', label: 'linear', fn: Easing.linear, color: ASH },
-    { name: 'easeOut', label: 'easeOut', fn: Easing.easeOut, color: OLIVE },
-    { name: 'spring', label: 'spring', fn: Easing.spring, color: TERRA },
-    { name: 'easeInOut', label: 'easeInOut', fn: Easing.easeInOut, color: DEEP_BLUE },
-  ];
-
-  const trackLeft = 320;
-  const trackRight = 1480;
-  const trackLen = trackRight - trackLeft;
-
-  return (
-    <div style={{position:'absolute', inset:0, background: CREAM, opacity: fadeOut,
-      padding: '80px 100px', display:'flex', flexDirection:'column'}}>
-      <div style={{opacity: titleOp, marginBottom: 50,
-        display:'flex', justifyContent:'space-between', alignItems:'baseline'}}>
-        <div>
-          <div style={{fontFamily: mono, fontSize: 11, color: TERRA,
-            letterSpacing:'0.3em', marginBottom: 6}}>场景 1 · EASING</div>
-          <div style={{fontFamily: serif, fontSize: 56, fontWeight: 500, color: INK,
-            letterSpacing:'-0.01em'}}>
-            四种缓动曲线同跑
-          </div>
-        </div>
-        <div style={{fontFamily: serif, fontStyle:'italic', fontSize: 18, color: ASH,
-          textAlign:'right'}}>
-          同样的 2 秒，<br/>
-          走出四种不同的「节奏感」
-        </div>
       </div>
 
-      <div style={{flex: 1, position:'relative'}}>
-        {curves.map((c, i) => {
-          const y = 80 + i * 140;
-          const t = c.fn(sweepT);
-          const x = trackLeft + trackLen * t;
-          // Draw the curve as a mini sparkline right of track
-          const sparkW = 160, sparkH = 50;
-          const sparkPts = Array.from({length: 30}, (_, k) => {
-            const tx = k / 29;
-            const ty = 1 - c.fn(tx);
-            return `${tx * sparkW},${ty * sparkH}`;
-          }).join(' ');
-          return (
-            <div key={i}>
-              {/* Label (left) */}
-              <div style={{position:'absolute', left: 0, top: y - 22, width: 280,
-                fontFamily: mono, fontSize: 14, color: INK, letterSpacing:'0.05em'}}>
-                <span style={{color: c.color, marginRight: 12}}>●</span>
-                Easing.<span style={{color: c.color}}>{c.label}</span>
+      <!-- Divider -->
+      <div class="split-divider"></div>
+
+      <!-- BOTTOM: Driven stage -->
+      <div class="split-bottom">
+        <div class="panel-label">DRIVEN · <span class="accent">STAGE</span></div>
+        <div class="driven-stage">
+
+          <!-- viz 1: useTime — clock -->
+          <div class="viz" id="viz-time">
+            <div class="viz-clock" id="clockRoot">
+              <!-- 12 tick marks -->
+              <div class="tickmark q" style="transform: translate(-50%, 0) rotate(0deg);"></div>
+              <div class="tickmark" style="transform: translate(-50%, 0) rotate(30deg);"></div>
+              <div class="tickmark" style="transform: translate(-50%, 0) rotate(60deg);"></div>
+              <div class="tickmark q" style="transform: translate(-50%, 0) rotate(90deg);"></div>
+              <div class="tickmark" style="transform: translate(-50%, 0) rotate(120deg);"></div>
+              <div class="tickmark" style="transform: translate(-50%, 0) rotate(150deg);"></div>
+              <div class="tickmark q" style="transform: translate(-50%, 0) rotate(180deg);"></div>
+              <div class="tickmark" style="transform: translate(-50%, 0) rotate(210deg);"></div>
+              <div class="tickmark" style="transform: translate(-50%, 0) rotate(240deg);"></div>
+              <div class="tickmark q" style="transform: translate(-50%, 0) rotate(270deg);"></div>
+              <div class="tickmark" style="transform: translate(-50%, 0) rotate(300deg);"></div>
+              <div class="tickmark" style="transform: translate(-50%, 0) rotate(330deg);"></div>
+
+              <div class="hand-h" id="handH"></div>
+              <div class="hand-m" id="handM"></div>
+              <div class="hand-s" id="handS"></div>
+              <div class="center-dot"></div>
+
+              <div class="viz-clock-label">
+                t = <span class="val" id="timeVal">0.00s</span>
               </div>
-              {/* Track */}
-              <div style={{position:'absolute', left: trackLeft, top: y,
-                width: trackLen, height: 2, background: LINE}} />
-              {/* Dot */}
-              <div style={{position:'absolute', left: x - 14, top: y - 14,
-                width: 28, height: 28, borderRadius: '50%',
-                background: c.color,
-                boxShadow: `0 4px 12px ${c.color}55`}} />
-              {/* Sparkline */}
-              <svg style={{position:'absolute', left: trackRight + 60, top: y - sparkH/2 - 5,
-                width: sparkW, height: sparkH}}>
-                <polyline points={sparkPts} stroke={c.color} strokeWidth="1.5" fill="none" />
-                <circle cx={sweepT * sparkW} cy={(1 - c.fn(sweepT)) * sparkH}
-                  r="3.5" fill={c.color} />
+            </div>
+          </div>
+
+          <!-- viz 2: interpolate — morph -->
+          <div class="viz" id="viz-interp">
+            <div class="viz-morph">
+              <div class="morph-box">
+                <div class="morph-rect" id="morphFrom" style="width: 80px; height: 80px; background: var(--hair-strong); border-radius: 2px;"></div>
+                <div class="morph-label">FROM · <span class="val">0 → 100</span></div>
+              </div>
+              <div class="morph-arrow">──────→</div>
+              <div class="morph-box">
+                <div class="morph-rect" id="morphTo"></div>
+                <div class="morph-label">INTERPOLATE · <span class="val" id="interpVal">0.00</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- viz 3: Easing — 3 curves drawn in parallel -->
+          <div class="viz" id="viz-easing">
+            <div class="viz-curves">
+              <svg class="curves-svg" viewBox="0 0 720 320" preserveAspectRatio="none">
+                <!-- Grid -->
+                <line x1="60" y1="260" x2="680" y2="260" stroke="rgba(255,255,255,0.18)" stroke-width="1"/>
+                <line x1="60" y1="260" x2="60" y2="40" stroke="rgba(255,255,255,0.18)" stroke-width="1"/>
+
+                <!-- Axis labels -->
+                <text x="50" y="266" text-anchor="end" fill="rgba(255,255,255,0.4)" font-family="JetBrains Mono, monospace" font-size="11">0</text>
+                <text x="50" y="48" text-anchor="end" fill="rgba(255,255,255,0.4)" font-family="JetBrains Mono, monospace" font-size="11">1</text>
+                <text x="680" y="282" text-anchor="end" fill="rgba(255,255,255,0.4)" font-family="JetBrains Mono, monospace" font-size="11">t</text>
+
+                <!-- Curves -->
+                <path id="pathLinear" d="M 60 260 L 60 260" stroke="rgba(255,255,255,0.42)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+                <path id="pathCubic" d="M 60 260 L 60 260" stroke="rgba(255,255,255,0.75)" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+                <path id="pathExpo" d="M 60 260 L 60 260" stroke="#D97757" stroke-width="2.2" fill="none" stroke-linecap="round"/>
               </svg>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Timeline at bottom */}
-      <div style={{marginTop: 10, position:'relative', height: 30}}>
-        <div style={{fontFamily: mono, fontSize: 10, color: ASH, letterSpacing:'0.15em'}}>
-          t = <span style={{color: INK}}>{sweepT.toFixed(2)}</span> &nbsp; · &nbsp; 周期 2.0s
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── Scene 3: interpolate() function demo (8 – 14s) ───────
-function Scene3_Interpolate() {
-  const { elapsed } = useSprite();
-  const titleOp = interpolate(elapsed, [0, 0.4], [0, 1]);
-  const fadeOut = interpolate(elapsed, [5.6, 6.0], [1, 0]);
-
-  // Animated t value: 0→1 cycle over ~3s
-  const cycle = (elapsed % 3.2) / 3.0;
-  const t = Math.min(1, Math.max(0, cycle));
-
-  // Three mapped outputs from same t:
-  const opacity = interpolate(t, [0, 1], [0, 1]);
-  const scale = interpolate(t, [0, 1], [0.4, 1.2], Easing.spring);
-  const rotation = interpolate(t, [0, 1], [-30, 30], Easing.easeInOut);
-  const translateX = interpolate(t, [0, 0.5, 1], [-80, 40, 0]);
-
-  return (
-    <div style={{position:'absolute', inset:0, background: CREAM, opacity: fadeOut,
-      padding: '80px 100px', display:'flex', flexDirection:'column'}}>
-      <div style={{opacity: titleOp, marginBottom: 40,
-        display:'flex', justifyContent:'space-between', alignItems:'baseline'}}>
-        <div>
-          <div style={{fontFamily: mono, fontSize: 11, color: TERRA,
-            letterSpacing:'0.3em', marginBottom: 6}}>场景 2 · INTERPOLATE</div>
-          <div style={{fontFamily: serif, fontSize: 56, fontWeight: 500, color: INK,
-            letterSpacing:'-0.01em'}}>
-            一个 <span style={{fontStyle:'italic', color: TERRA}}>t</span>，四种变化
-          </div>
-        </div>
-        <div style={{fontFamily: serif, fontStyle:'italic', fontSize: 18, color: ASH,
-          textAlign:'right'}}>
-          用同一条时间轴，<br/>
-          映射出透明度、尺寸、旋转、位移
-        </div>
-      </div>
-
-      {/* t value progress bar */}
-      <div style={{background:'#fff', border: `1px solid ${LINE}`,
-        padding: '20px 32px', marginBottom: 30}}>
-        <div style={{display:'flex', justifyContent:'space-between',
-          alignItems:'baseline', marginBottom: 14}}>
-          <div style={{fontFamily: mono, fontSize: 13, color: INK}}>
-            <span style={{color: ASH}}>const</span> t = <span style={{color: TERRA}}>{t.toFixed(3)}</span>
-          </div>
-          <div style={{fontFamily: mono, fontSize: 11, color: ASH, letterSpacing:'0.15em'}}>
-            时间 → 0 到 1
-          </div>
-        </div>
-        <div style={{height: 4, background: LINE, position:'relative'}}>
-          <div style={{position:'absolute', top:0, left:0, height:'100%',
-            width: `${t * 100}%`, background: TERRA}} />
-        </div>
-      </div>
-
-      {/* Four demos */}
-      <div style={{flex: 1, display:'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 24}}>
-        {[
-          { name: 'opacity', code: 'interpolate(t, [0,1], [0,1])', val: opacity, render:
-            <div style={{width: 120, height: 120, background: TERRA, opacity}} /> },
-          { name: 'scale + spring', code: 'interpolate(t, [0,1], [0.4,1.2], spring)', val: scale, render:
-            <div style={{width: 120, height: 120, background: OLIVE,
-              transform: `scale(${scale})`}} /> },
-          { name: 'rotate', code: 'interpolate(t, [0,1], [-30,30], easeInOut)', val: rotation, render:
-            <div style={{width: 120, height: 120, background: DEEP_BLUE,
-              transform: `rotate(${rotation}deg)`}} /> },
-          { name: 'translateX (3 stops)', code: 'interpolate(t, [0,.5,1], [-80,40,0])', val: translateX, render:
-            <div style={{width: 120, height: 120, background: INK,
-              transform: `translateX(${translateX}px)`}} /> },
-        ].map((d, i) => (
-          <div key={i} style={{background:'#fff', border:`1px solid ${LINE}`,
-            padding: '18px 18px 14px', display:'flex', flexDirection:'column'}}>
-            <div style={{fontFamily: mono, fontSize: 9, color: TERRA,
-              letterSpacing:'0.2em', marginBottom: 6}}>0{i+1}</div>
-            <div style={{fontFamily: serif, fontSize: 18, fontWeight: 500, color: INK,
-              marginBottom: 6}}>{d.name}</div>
-            <div style={{fontFamily: mono, fontSize: 10, color: ASH,
-              marginBottom: 20, minHeight: 32, wordBreak:'break-all', lineHeight: 1.5}}>
-              {d.code}
-            </div>
-            <div style={{flex: 1, display:'flex', alignItems:'center',
-              justifyContent:'center', overflow:'hidden'}}>
-              {d.render}
-            </div>
-            <div style={{fontFamily: mono, fontSize: 10, color: ASH,
-              marginTop: 12, textAlign:'right'}}>
-              = <span style={{color: TERRA}}>{d.val.toFixed(2)}</span>
+              <div class="curve-label l-linear">linear</div>
+              <div class="curve-label l-cubic">cubicOut</div>
+              <div class="curve-label l-expo">expoOut</div>
             </div>
           </div>
-        ))}
-      </div>
-    </div>
-  );
-}
 
-// ── Scene 4: Sprite sequencing on timeline (14 – 20s) ───
-function Scene4_Sprite() {
-  const { elapsed } = useSprite();
-  const titleOp = interpolate(elapsed, [0, 0.4], [0, 1]);
-  const fadeOut = interpolate(elapsed, [5.6, 6.0], [1, 0]);
-
-  // Timeline plays 6s
-  const localTime = Math.min(elapsed, 5.6);
-
-  const sprites = [
-    { name: 'Title',  start: 0.0, end: 2.5, color: TERRA,   y: 0, label: '标题' },
-    { name: 'Image',  start: 0.8, end: 3.5, color: OLIVE,   y: 1, label: '图像淡入' },
-    { name: 'Text',   start: 1.8, end: 4.5, color: DEEP_BLUE, y: 2, label: '正文' },
-    { name: 'Outro',  start: 4.0, end: 5.5, color: '#8b4a2b', y: 3, label: '结尾' },
-  ];
-
-  const timelineLeft = 100;
-  const timelineRight = 1820;
-  const timelineW = timelineRight - timelineLeft;
-  const totalDur = 5.6;
-  const cursorX = timelineLeft + (localTime / totalDur) * timelineW;
-
-  return (
-    <div style={{position:'absolute', inset:0, background: CREAM, opacity: fadeOut,
-      padding: '80px 100px 60px', display:'flex', flexDirection:'column'}}>
-      <div style={{opacity: titleOp, marginBottom: 30,
-        display:'flex', justifyContent:'space-between', alignItems:'baseline'}}>
-        <div>
-          <div style={{fontFamily: mono, fontSize: 11, color: TERRA,
-            letterSpacing:'0.3em', marginBottom: 6}}>场景 3 · SPRITE 编排</div>
-          <div style={{fontFamily: serif, fontSize: 56, fontWeight: 500, color: INK,
-            letterSpacing:'-0.01em'}}>
-            时间片段 · <span style={{fontStyle:'italic'}}>同台起舞</span>
+          <!-- viz 4: useSprite — 24 sprites -->
+          <div class="viz" id="viz-sprite">
+            <div class="viz-sprites" id="spriteGrid">
+              <!-- 24 sprites (6x4), filled by JS -->
+            </div>
           </div>
         </div>
-        <div style={{fontFamily: serif, fontStyle:'italic', fontSize: 18, color: ASH,
-          textAlign:'right'}}>
-          每个 &lt;Sprite start=... end=...&gt;<br/>
-          在自己的时间窗口出场、退场
-        </div>
       </div>
 
-      {/* Live visualization area */}
-      <div style={{background:'#fff', border:`1px solid ${LINE}`, flex: 1,
-        position:'relative', overflow:'hidden', marginBottom: 30}}>
-        {sprites.map((s, i) => {
-          const active = localTime >= s.start && localTime < s.end;
-          if (!active) return null;
-          const localT = (localTime - s.start) / (s.end - s.start);
-          const op = interpolate(localT, [0, 0.15, 0.85, 1], [0, 1, 1, 0]);
-          const ty = interpolate(localT, [0, 0.2], [30, 0], Easing.easeOut);
-
-          if (s.name === 'Title') {
-            return (
-              <div key={i} style={{position:'absolute', top: 60, left: 80, right: 80,
-                opacity: op, transform: `translateY(${ty}px)`}}>
-                <div style={{fontFamily: mono, fontSize: 10, color: s.color,
-                  letterSpacing:'0.3em', marginBottom: 10}}>CHAPTER 01</div>
-                <div style={{fontFamily: serif, fontSize: 64, fontWeight: 500,
-                  color: INK, lineHeight: 1.05, letterSpacing:'-0.01em'}}>
-                  如何让动画 <span style={{fontStyle:'italic', color: s.color}}>好看</span>
-                </div>
-              </div>
-            );
-          }
-          if (s.name === 'Image') {
-            return (
-              <div key={i} style={{position:'absolute', top: 60, right: 80,
-                width: 380, height: 240, opacity: op,
-                transform: `translateY(${ty}px)`,
-                background: `linear-gradient(135deg, ${s.color}, ${s.color}88 50%, ${s.color}33)`,
-                overflow: 'hidden'}}>
-                <div style={{position:'absolute', inset: 0,
-                  background: `radial-gradient(circle at 30% 30%, ${s.color}aa, transparent 50%)`}} />
-                <div style={{position:'absolute', bottom: 14, left: 16,
-                  fontFamily: mono, fontSize: 9, color: '#fff',
-                  letterSpacing:'0.2em', opacity: 0.8}}>
-                  IMAGE · FADE-IN
-                </div>
-              </div>
-            );
-          }
-          if (s.name === 'Text') {
-            return (
-              <div key={i} style={{position:'absolute', bottom: 80, left: 80, right: 80,
-                opacity: op, transform: `translateY(${ty}px)`}}>
-                <div style={{fontFamily: mono, fontSize: 10, color: s.color,
-                  letterSpacing:'0.3em', marginBottom: 10}}>BODY</div>
-                <div style={{fontFamily: serif, fontSize: 20, color: INK,
-                  lineHeight: 1.55, maxWidth: 720}}>
-                  好的 motion 不是每个元素都在抢戏——是<span style={{fontStyle:'italic'}}>一个
-                  </span>进、<span style={{fontStyle:'italic'}}>一个</span>退、留足呼吸，
-                  最后合奏收尾。
-                </div>
-              </div>
-            );
-          }
-          if (s.name === 'Outro') {
-            return (
-              <div key={i} style={{position:'absolute', inset: 0,
-                opacity: op, display:'flex', alignItems:'center',
-                justifyContent:'center', flexDirection:'column'}}>
-                <div style={{fontFamily: serif, fontSize: 88, fontWeight: 500,
-                  color: s.color, fontStyle:'italic', letterSpacing:'-0.01em'}}>
-                  — fin —
-                </div>
-                <div style={{fontFamily: mono, fontSize: 11, color: ASH,
-                  letterSpacing:'0.3em', marginTop: 14}}>
-                  4 SPRITES · 5.5 SECONDS · 1 STAGE
-                </div>
-              </div>
-            );
-          }
-        })}
-      </div>
-
-      {/* Timeline viz (showing sprite spans) */}
-      <div style={{position:'relative', height: 110}}>
-        {/* Labels */}
-        {sprites.map((s, i) => (
-          <div key={i} style={{position:'absolute', left: 0, top: i * 22,
-            fontFamily: mono, fontSize: 10, color: ASH, letterSpacing:'0.05em'}}>
-            <span style={{color: s.color, marginRight: 8}}>●</span>{s.label}
-          </div>
-        ))}
-        {/* Tracks */}
-        {sprites.map((s, i) => {
-          const x0 = timelineLeft + (s.start / totalDur) * timelineW;
-          const x1 = timelineLeft + (s.end / totalDur) * timelineW;
-          const active = localTime >= s.start && localTime < s.end;
-          return (
-            <div key={i} style={{position:'absolute',
-              left: x0, top: i * 22 - 2, width: x1 - x0, height: 16,
-              background: active ? s.color : `${s.color}55`,
-              borderLeft: `2px solid ${s.color}`}} />
-          );
-        })}
-        {/* Playhead cursor */}
-        <div style={{position:'absolute', left: cursorX - 1, top: -6,
-          width: 2, height: 110, background: INK, zIndex: 5}} />
-        <div style={{position:'absolute', left: cursorX - 20, top: -20,
-          fontFamily: mono, fontSize: 10, color: INK,
-          letterSpacing:'0.1em'}}>
-          {localTime.toFixed(2)}s
-        </div>
-      </div>
     </div>
-  );
-}
+  </div>
 
-// ── Scene 5: Outro (20 – 22s) ─────────────────────────
-function Scene5_Outro() {
-  const { elapsed } = useSprite();
-  const fadeIn = interpolate(elapsed, [0, 0.6], [0, 1], Easing.easeOut);
-  const lineW = interpolate(elapsed, [0.5, 1.3], [0, 620]);
-  return (
-    <div style={{position:'absolute', inset:0, background: CREAM, opacity: fadeIn,
-      display:'flex', alignItems:'center', justifyContent:'center',
-      flexDirection:'column'}}>
-      <div style={{fontFamily: mono, fontSize: 12, letterSpacing:'0.4em',
-        color: TERRA, marginBottom: 20}}>
-        导出 · MP4 / GIF / 60FPS / BGM
-      </div>
-      <div style={{fontFamily: serif, fontSize: 108, fontWeight: 500,
-        color: INK, lineHeight: 1, letterSpacing:'-0.015em'}}>
-        从 <span style={{fontStyle:'italic', color: TERRA}}>时间</span>，到成片
-      </div>
-      <div style={{height: 1, background: INK, width: lineW, marginTop: 36}} />
-      <div style={{fontFamily: serif, fontStyle:'italic', fontSize: 22, color: ASH,
-        marginTop: 26, maxWidth: 800, textAlign:'center', lineHeight: 1.55}}>
-        render-video.js · convert-formats.sh · add-music.sh<br/>
-        一条命令跑完，产出社交媒体可直接用的素材
-      </div>
-    </div>
-  );
-}
+  <!-- ============ Scene 2: Brand reveal (米色面板, 8.0 → 10s) ============ -->
+  <div class="scene scene-brand" id="scene-brand">
+    <div class="brand-panel" id="brandPanel"></div>
+    <div class="brand-wordmark" id="wordmark">huashu<span class="accent">-</span>design</div>
+    <div class="brand-line" id="brandLine"></div>
+  </div>
 
-// ── Watermark ──────────────────────────────────────────
-function Watermark() {
-  return (
-    <div style={{position:'absolute', bottom: 24, right: 32,
-      fontSize: 11, color: 'rgba(0,0,0,0.38)', letterSpacing:'0.15em',
-      fontFamily: mono, pointerEvents:'none', zIndex: 100}}>
-      Created by Huashu-Design
-    </div>
-  );
-}
+  <!-- Bottom-right watermark -->
+  <div class="watermark-br" id="watermarkBR">V2 · 2026</div>
 
-function App() {
-  return (
-    <Stage duration={22} width={1920} height={1080} bgColor={CREAM}>
-      <Sprite start={0} end={3}><Scene1_Title /></Sprite>
-      <Sprite start={3} end={8}><Scene2_Easing /></Sprite>
-      <Sprite start={8} end={14}><Scene3_Interpolate /></Sprite>
-      <Sprite start={14} end={20}><Scene4_Sprite /></Sprite>
-      <Sprite start={20} end={22}><Scene5_Outro /></Sprite>
-      <Watermark />
-    </Stage>
-  );
-}
+  <!-- Replay button (hidden during recording) -->
+  <button class="replay-btn no-record" id="replayBtn">REPLAY</button>
 
-ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</div>
+
+<script>
+(function() {
+  // =============== Timing ===============
+  const T = {
+    DURATION: 10.0,
+
+    // Scene 0: intro
+    intro_in:  [0.0, 0.5],
+    intro_out: [1.3, 1.6],
+
+    // Scene 1: main (timeline + driven stage)
+    main_in:   [1.5, 1.9],     // fade in
+    // Playhead sweeps from 0% (at t=1.6) to 100% (at t=8.2).
+    // API activations use GLOBAL time. Their capsule position is placed so
+    // that playhead passes under the capsule right when the API peaks.
+    main_t0:   1.6,
+    main_t_end: 8.2,
+    main_out:  [8.0, 8.4],
+
+    // API activations (GLOBAL time)
+    // Each API: [activate_start, peak, deactivate_end]
+    // Capsule x% = (peak - 1.6) / (8.2 - 1.6) * 100
+    useTime:     [2.0, 2.8, 3.6],   // capsule @ ~18%
+    interpolate: [3.6, 4.1, 4.8],   // capsule @ ~38%
+    Easing:      [4.8, 5.4, 6.2],   // capsule @ ~58%
+    useSprite:   [6.2, 6.9, 7.9],   // capsule @ ~80%
+
+    // Scene 2: Brand reveal (米色面板 standard, last 2s of T=10)
+    // [T-2.0 → T-1.7]: main fade 1→0 (already handled by main_out 8.0-8.4)
+    // [T-1.7 → T-1.3]: beige panel translateY 100%→0, expoOut
+    // [T-1.3 → T-0.7]: wordmark weight 100→500 + y:20→0 + opacity 0→1, expoOut
+    // [T-0.7 → T-0.3]: orange line width 0→280px, cubicOut
+    // [T-0.3 → T]: hold
+    brand_panel:  [8.3, 8.7],
+    brand_word:   [8.7, 9.3],
+    brand_line:   [9.3, 9.7],
+  };
+
+  // =============== Easings ===============
+  const expoOut = t => (t >= 1 ? 1 : 1 - Math.pow(2, -10 * t));
+  const expoIn  = t => (t <= 0 ? 0 : Math.pow(2, 10 * (t - 1)));
+  const cubicOut = t => 1 - Math.pow(1 - t, 3);
+  const cubicIn  = t => t * t * t;
+  const cubicInOut = t => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+  const easeInOut  = cubicInOut;
+  const linear = t => t;
+
+  // =============== Utils ===============
+  const clamp = (v, lo = 0, hi = 1) => Math.max(lo, Math.min(hi, v));
+  const clampLerp = (t, t0, t1) => clamp((t - t0) / (t1 - t0));
+  function lerp(t, t0, t1, v0, v1, easing = linear) {
+    const p = clampLerp(t, t0, t1);
+    return v0 + (v1 - v0) * easing(p);
+  }
+
+  // =============== DOM refs ===============
+  const scenes = {
+    intro: document.getElementById('scene-intro'),
+    main: document.getElementById('scene-main'),
+    brand: document.getElementById('scene-brand'),
+  };
+  const introTitle = document.getElementById('introTitle');
+  const introSub = document.getElementById('introSub');
+
+  const timelineFill = document.getElementById('timelineFill');
+  const playhead = document.getElementById('playhead');
+
+  const capTime = document.getElementById('cap-time');
+  const capInterp = document.getElementById('cap-interp');
+  const capEasing = document.getElementById('cap-easing');
+  const capSprite = document.getElementById('cap-sprite');
+
+  const stemTime = document.getElementById('stem-time');
+  const stemInterp = document.getElementById('stem-interp');
+  const stemEasing = document.getElementById('stem-easing');
+  const stemSprite = document.getElementById('stem-sprite');
+
+  const vizTime = document.getElementById('viz-time');
+  const vizInterp = document.getElementById('viz-interp');
+  const vizEasing = document.getElementById('viz-easing');
+  const vizSprite = document.getElementById('viz-sprite');
+
+  const handS = document.getElementById('handS');
+  const handM = document.getElementById('handM');
+  const handH = document.getElementById('handH');
+  const timeVal = document.getElementById('timeVal');
+
+  const morphTo = document.getElementById('morphTo');
+  const interpVal = document.getElementById('interpVal');
+
+  const pathLinear = document.getElementById('pathLinear');
+  const pathCubic = document.getElementById('pathCubic');
+  const pathExpo = document.getElementById('pathExpo');
+
+  const spriteGrid = document.getElementById('spriteGrid');
+  const wordmark = document.getElementById('wordmark');
+  const brandLine = document.getElementById('brandLine');
+  const brandPanel = document.getElementById('brandPanel');
+  const watermarkBR = document.getElementById('watermarkBR');
+  const replayBtn = document.getElementById('replayBtn');
+
+  // Build 24 sprites (6x4 grid)
+  const SPRITE_COLS = 6, SPRITE_ROWS = 4;
+  const spriteEls = [];
+  for (let r = 0; r < SPRITE_ROWS; r++) {
+    for (let c = 0; c < SPRITE_COLS; c++) {
+      const el = document.createElement('div');
+      el.className = 'sprite';
+      // center distance for ripple
+      const dc = c - (SPRITE_COLS - 1) / 2;
+      const dr = r - (SPRITE_ROWS - 1) / 2;
+      const dist = Math.sqrt(dc * dc + dr * dr);
+      const maxDist = Math.sqrt(((SPRITE_COLS - 1) / 2) ** 2 + ((SPRITE_ROWS - 1) / 2) ** 2);
+      el.dataset.delay = (dist / maxDist).toFixed(3);
+      spriteGrid.appendChild(el);
+      spriteEls.push(el);
+    }
+  }
+
+  // =============== Scene helpers ===============
+  function showScene(el, opacity) {
+    if (opacity > 0.001) el.classList.add('visible');
+    else el.classList.remove('visible');
+    el.style.opacity = opacity;
+  }
+
+  // =============== API activation logic ===============
+  function apiState(t_local, api) {
+    // Returns { on: bool, strength: 0-1 }
+    const [a, peak, b] = T[api];
+    if (t_local < a || t_local > b) return { on: false, strength: 0 };
+    if (t_local < peak) {
+      return { on: true, strength: expoOut(clampLerp(t_local, a, peak)) };
+    } else {
+      return { on: true, strength: 1 - cubicIn(clampLerp(t_local, peak, b)) };
+    }
+  }
+
+  // =============== Draw easing curves progressively ===============
+  function easingPath(easingFn, progress) {
+    // progress 0-1 draws the curve from left to right
+    // x range: 60 → 680, y range: 260 (0) → 40 (1)
+    const X0 = 60, X1 = 680, Y0 = 260, Y1 = 40;
+    const steps = Math.max(2, Math.floor(progress * 80));
+    let d = `M ${X0} ${Y0}`;
+    for (let i = 1; i <= steps; i++) {
+      const t = (i / 80) * progress;
+      const x = X0 + (X1 - X0) * t;
+      const y = Y0 + (Y1 - Y0) * easingFn(t);
+      d += ` L ${x.toFixed(2)} ${y.toFixed(2)}`;
+    }
+    return d;
+  }
+
+  // =============== Render ===============
+  function render(t) {
+    // ============ Scene 0: Intro ============
+    if (t < T.main_in[1]) {
+      let op = 0;
+      if (t < T.intro_in[1]) op = clampLerp(t, T.intro_in[0], T.intro_in[1]);
+      else if (t < T.intro_out[0]) op = 1;
+      else op = 1 - clampLerp(t, T.intro_out[0], T.intro_out[1]);
+      showScene(scenes.intro, op);
+
+      // weight morph + rise
+      const morphP = expoOut(clampLerp(t, T.intro_in[0], T.intro_in[1] + 0.3));
+      const w = 150 + (400 - 150) * morphP;
+      introTitle.style.fontWeight = Math.round(w);
+      const rise = lerp(t, T.intro_in[0], T.intro_in[1], 16, 0, expoOut);
+      introTitle.style.transform = `translate3d(0, ${rise}px, 0)`;
+      introSub.style.opacity = clampLerp(t, T.intro_in[1], T.intro_in[1] + 0.4);
+    } else {
+      showScene(scenes.intro, 0);
+    }
+
+    // ============ Scene 1: Main (split view) ============
+    if (t >= T.main_in[0] - 0.1 && t < T.main_out[1]) {
+      let op;
+      if (t < T.main_in[1]) op = clampLerp(t, T.main_in[0], T.main_in[1]);
+      else if (t < T.main_out[0]) op = 1;
+      else op = 1 - clampLerp(t, T.main_out[0], T.main_out[1]);
+      showScene(scenes.main, op);
+
+      // Playhead sweeps 0% → 100% across the window [main_t0, main_t_end]
+      const phP = clampLerp(t, T.main_t0, T.main_t_end);
+      const phPct = phP * 100;
+      playhead.style.left = phPct + '%';
+      // Keep: use t directly for API state
+      const t_local_clamped = t;
+
+      // Timeline fill
+      timelineFill.style.width = phPct + '%';
+
+      // API capsules: lit state driven by apiState
+      const stTime = apiState(t_local_clamped, 'useTime');
+      const stInterp = apiState(t_local_clamped, 'interpolate');
+      const stEasing = apiState(t_local_clamped, 'Easing');
+      const stSprite = apiState(t_local_clamped, 'useSprite');
+
+      setLit(capTime, stemTime, stTime);
+      setLit(capInterp, stemInterp, stInterp);
+      setLit(capEasing, stemEasing, stEasing);
+      setLit(capSprite, stemSprite, stSprite);
+
+      // Viz opacities — each viz only visible during its API's window
+      vizTime.style.opacity = stTime.on ? stTime.strength : 0;
+      vizInterp.style.opacity = stInterp.on ? stInterp.strength : 0;
+      vizEasing.style.opacity = stEasing.on ? stEasing.strength : 0;
+      vizSprite.style.opacity = stSprite.on ? stSprite.strength : 0;
+
+      // ========= viz 1: clock =========
+      // Continuous rotation (not just when active) so transition looks natural
+      // But only animate hands when api is near-active, to avoid wasted cpu
+      {
+        const [a, _peak, b] = T.useTime;
+        // Second hand: one revolution over the active window
+        const localP = clampLerp(t_local_clamped, a, b);
+        // Multi-revolution: 1.5 turns over the window
+        const sDeg = localP * 540;
+        const mDeg = localP * 180 + 120;
+        const hDeg = localP * 60 + 30;
+        handS.style.transform = `translateX(-50%) rotate(${sDeg}deg)`;
+        handM.style.transform = `translateX(-50%) rotate(${mDeg}deg)`;
+        handH.style.transform = `translateX(-50%) rotate(${hDeg}deg)`;
+
+        // Display value as t in seconds mapping 0→1.50
+        const displayVal = (localP * 1.5).toFixed(2);
+        timeVal.textContent = displayVal + 's';
+      }
+
+      // ========= viz 2: interpolate =========
+      {
+        const [a, _peak, b] = T.interpolate;
+        const localP = clampLerp(t_local_clamped, a, b);
+        const eased = easeInOut(localP);
+        // morph from 80×80 black → 220×160 orange, rounded
+        const W = 80 + (240 - 80) * eased;
+        const H = 80 + (160 - 80) * eased;
+        const bright = Math.round(30 + (217 - 30) * eased);
+        const brightG = Math.round(30 + (119 - 30) * eased);
+        const brightB = Math.round(30 + (87 - 30) * eased);
+        const rad = 2 + (20 - 2) * eased;
+        morphTo.style.width = W + 'px';
+        morphTo.style.height = H + 'px';
+        morphTo.style.background = `rgb(${bright}, ${brightG}, ${brightB})`;
+        morphTo.style.borderRadius = rad + 'px';
+        interpVal.textContent = eased.toFixed(2);
+      }
+
+      // ========= viz 3: easing curves =========
+      {
+        const [a, _peak, b] = T.Easing;
+        const localP = clampLerp(t_local_clamped, a, b);
+        pathLinear.setAttribute('d', easingPath(linear, localP));
+        pathCubic.setAttribute('d', easingPath(cubicOut, localP));
+        pathExpo.setAttribute('d', easingPath(expoOut, localP));
+      }
+
+      // ========= viz 4: sprites =========
+      {
+        const [a, _peak, b] = T.useSprite;
+        const localP = clampLerp(t_local_clamped, a, b);
+        for (const el of spriteEls) {
+          const delay = parseFloat(el.dataset.delay);
+          const spriteLocalT = clamp((localP - delay * 0.5) / 0.5, 0, 1);
+          const op = expoOut(spriteLocalT);
+          el.style.opacity = op;
+          const scale = 0.5 + 0.5 * op;
+          const y = (1 - op) * 14;
+          el.style.transform = `translateY(${y}px) scale(${scale})`;
+          el.style.background = op > 0.85 ? 'var(--accent)' : 'var(--hairline)';
+        }
+      }
+    } else {
+      showScene(scenes.main, 0);
+    }
+
+    // ============ Scene 2: Brand reveal (米色面板标准动作) ============
+    if (t >= T.brand_panel[0] - 0.1) {
+      showScene(scenes.brand, 1);
+
+      // [T-1.7 → T-1.3]: beige panel slides up, expoOut
+      const panelP = expoOut(clampLerp(t, T.brand_panel[0], T.brand_panel[1]));
+      brandPanel.style.transform = `translateY(${(1 - panelP) * 100}%)`;
+
+      // [T-1.3 → T-0.7]: wordmark weight 100→500 + y:20→0 + opacity:0→1, expoOut
+      const wordP = expoOut(clampLerp(t, T.brand_word[0], T.brand_word[1]));
+      const w = 100 + (500 - 100) * wordP;
+      wordmark.style.fontVariationSettings = `"wght" ${w.toFixed(0)}`;
+      wordmark.style.fontWeight = Math.round(w);
+      wordmark.style.opacity = wordP;
+      const wRise = (1 - wordP) * 20;
+      wordmark.style.transform = `translate(-50%, calc(-50% + ${wRise}px))`;
+
+      // [T-0.7 → T-0.3]: orange line expands 0→280px, cubicOut
+      const lineP = cubicOut(clampLerp(t, T.brand_line[0], T.brand_line[1]));
+      brandLine.style.width = (lineP * 280) + 'px';
+    } else {
+      showScene(scenes.brand, 0);
+      brandPanel.style.transform = 'translateY(100%)';
+      wordmark.style.opacity = 0;
+      brandLine.style.width = '0px';
+    }
+
+    // Watermark visible from start of main until end
+    if (t >= T.main_in[0] && t < T.DURATION - 0.15) {
+      watermarkBR.classList.add('visible');
+    } else {
+      watermarkBR.classList.remove('visible');
+    }
+  }
+
+  function setLit(capsule, stem, state) {
+    if (state.on && state.strength > 0.15) {
+      capsule.classList.add('lit');
+      stem.classList.add('lit');
+      // Subtle scale pulse centered on peak (simplistic)
+      const scale = 1.0 + state.strength * 0.06;
+      capsule.style.transform = `translateX(-50%) scale(${scale})`;
+    } else {
+      capsule.classList.remove('lit');
+      stem.classList.remove('lit');
+      capsule.style.transform = 'translateX(-50%)';
+    }
+  }
+
+  // =============== Driver ===============
+  let manualT = null;
+  let startMs = null;
+  let hasFinishedOnce = false;
+
+  function tick(now) {
+    if (manualT != null) {
+      render(manualT);
+    } else {
+      if (startMs == null) startMs = now;
+      const elapsed = (now - startMs) / 1000;
+      const recording = window.__recording === true;
+      let t;
+      if (recording) {
+        t = Math.min(elapsed, T.DURATION - 0.001);
+        if (elapsed >= T.DURATION && !hasFinishedOnce) hasFinishedOnce = true;
+      } else {
+        t = elapsed % T.DURATION;
+        // Show replay button when we've played at least once
+        if (elapsed >= T.DURATION) {
+          replayBtn.classList.add('visible');
+        }
+      }
+      render(t);
+    }
+    requestAnimationFrame(tick);
+  }
+
+  // First paint signal for renderer
+  document.fonts.ready.then(() => {
+    render(0);
+    requestAnimationFrame(() => {
+      window.__ready = true;
+      requestAnimationFrame(tick);
+    });
+  });
+
+  // ========= Stage scaling (fit viewport) =========
+  function fitStage() {
+    const stage = document.getElementById('stage');
+    const scaleX = window.innerWidth / 1920;
+    const scaleY = window.innerHeight / 1080;
+    const scale = Math.min(scaleX, scaleY);
+    stage.style.transform = `translate(-50%, -50%) scale(${scale})`;
+  }
+  fitStage();
+  window.addEventListener('resize', fitStage);
+
+  // Replay
+  replayBtn.addEventListener('click', () => {
+    startMs = null;
+    replayBtn.classList.remove('visible');
+  });
+
+  // =============== Expose for frame-accurate rendering ===============
+  window.__setTime = (t) => { manualT = t; render(t); };
+  window.__resume = () => { manualT = null; startMs = null; };
+  window.__duration = T.DURATION;
+  window.__render = render;
+})();
 </script>
 </body>
 </html>
